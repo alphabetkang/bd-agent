@@ -11,7 +11,7 @@ interface ChatInterfaceProps {
   sessions: ChatSession[];
   activeId: string;
   status: ChatStatus;
-  statusText: string;
+  statusHistory: ChatStatus[];
   selectedMessageId: string | null;
   onSend: (query: string) => void;
   onAbort: () => void;
@@ -25,7 +25,7 @@ export function ChatInterface({
   sessions,
   activeId,
   status,
-  statusText,
+  statusHistory,
   selectedMessageId,
   onSend,
   onAbort,
@@ -41,12 +41,7 @@ export function ChatInterface({
     <div className={styles.chatInterface}>
       <header className={styles.header}>
         <span className={styles.headerTitle}>Intelligence Chat</span>
-        {isStreaming && (
-          <div className={styles.statusBadge}>
-            <Spinner size={12} />
-            <span>{statusText}</span>
-          </div>
-        )}
+        {isStreaming && <Spinner size={12} />}
       </header>
 
       <ChatTabs
@@ -60,6 +55,7 @@ export function ChatInterface({
       <MessageList
         messages={activeSession?.messages ?? []}
         selectedMessageId={selectedMessageId}
+        statusHistory={statusHistory}
         onSend={onSend}
         onSelectMessage={onSelectMessage}
       />

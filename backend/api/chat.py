@@ -50,12 +50,13 @@ async def _stream_research(query: str) -> AsyncGenerator[str, None]:
         name = event.get("name", "")
 
         # Status updates at node boundaries
-        if kind == "on_chain_start":
-            if name == "web_search":
+        node = event.get("metadata", {}).get("langgraph_node", "")
+        if kind == "on_chain_start" and node:
+            if node == "web_search":
                 yield _sse("status", {"message": "Searching the web..."})
-            elif name == "synthesis":
+            elif node == "synthesis":
                 yield _sse("status", {"message": "Analysing results..."})
-            elif name == "company_extraction":
+            elif node == "company_extraction":
                 yield _sse("status", {"message": "Identifying companies..."})
 
         # Stream LLM tokens

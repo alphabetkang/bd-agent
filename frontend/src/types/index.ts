@@ -13,6 +13,7 @@ export interface Message {
   content: string;
   companies?: Company[];
   isStreaming?: boolean;
+  isNotification?: boolean;
 }
 
 export type ChatStatus =

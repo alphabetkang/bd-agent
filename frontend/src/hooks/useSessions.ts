@@ -21,6 +21,7 @@ export function useSessions() {
   const [activeId, setActiveId] = useState<string>(() => sessions[0].id);
   const [statusMap, setStatusMap] = useState<Record<string, ChatStatus>>({});
   const [statusTextMap, setStatusTextMap] = useState<Record<string, string>>({});
+  const [statusHistoryMap, setStatusHistoryMap] = useState<Record<string, ChatStatus[]>>({});
   const abortMap = useRef<Record<string, AbortController>>({});
 
   // Load from localStorage
@@ -95,6 +96,7 @@ export function useSessions() {
 
       setStatusMap((p) => ({ ...p, [currentId]: "retrieving" }));
       setStatusTextMap((p) => ({ ...p, [currentId]: "Retrieving from news archive..." }));
+      setStatusHistoryMap((p) => ({ ...p, [currentId]: ["retrieving"] }));
 
       const ctrl = new AbortController();
       abortMap.current[currentId] = ctrl;
@@ -138,12 +140,18 @@ export function useSessions() {
                 const msg =
                   typeof content === "object" ? content.message ?? "" : content;
                 setStatusTextMap((p) => ({ ...p, [currentId]: msg }));
-                if (msg.includes("web"))
-                  setStatusMap((p) => ({ ...p, [currentId]: "searching" }));
-                else if (msg.includes("Analys"))
-                  setStatusMap((p) => ({ ...p, [currentId]: "analysing" }));
-                else if (msg.includes("compan"))
-                  setStatusMap((p) => ({ ...p, [currentId]: "extracting" }));
+                let newStatus: ChatStatus | null = null;
+                if (msg.includes("web")) newStatus = "searching";
+                else if (msg.includes("Analys")) newStatus = "analysing";
+                else if (msg.includes("compan")) newStatus = "extracting";
+                if (newStatus) {
+                  const ns = newStatus;
+                  setStatusMap((p) => ({ ...p, [currentId]: ns }));
+                  setStatusHistoryMap((p) => ({
+                    ...p,
+                    [currentId]: [...(p[currentId] ?? []), ns],
+                  }));
+                }
                 break;
               }
               case "token": {
@@ -233,9 +241,27 @@ export function useSessions() {
     setStatusMap((p) => ({ ...p, [activeId]: "idle" }));
   }, [activeId]);
 
+  const addNotification = useCallback(
+    (text: string) => {
+      const notifMsg: Message = {
+        id: uid(),
+        role: "assistant",
+        content: text,
+        isNotification: true,
+      };
+      setSessions((prev) =>
+        prev.map((s) =>
+          s.id === activeId ? { ...s, messages: [...s.messages, notifMsg] } : s
+        )
+      );
+    },
+    [activeId]
+  );
+
   const activeSession = sessions.find((s) => s.id === activeId) ?? sessions[0];
   const status: ChatStatus = statusMap[activeId] ?? "idle";
   const statusText: string = statusTextMap[activeId] ?? "";
+  const statusHistory: ChatStatus[] = statusHistoryMap[activeId] ?? [];
 
   return {
     sessions,
@@ -243,10 +269,12 @@ export function useSessions() {
     activeSession,
     status,
     statusText,
+    statusHistory,
     setActiveId,
     newSession,
     closeSession,
     sendMessage,
     abort,
+    addNotification,
   };
 }

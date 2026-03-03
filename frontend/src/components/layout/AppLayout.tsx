@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Sidebar } from "./Sidebar";
 import { ChatInterface } from "@/components/chat/ChatInterface";
 import { CompaniesPanel } from "@/components/companies/CompaniesPanel";
 import { FeedsView } from "@/components/feeds/FeedsView";
 import { AddSourceModal } from "@/components/sources/AddSourceModal";
 import { useSessions } from "@/hooks/useSessions";
+import { fetchSources } from "@/lib/api";
+import { UserSource } from "@/types";
 import styles from "./AppLayout.module.css";
 
 export function AppLayout() {
@@ -14,6 +16,7 @@ export function AppLayout() {
   const [activeView, setActiveView] = useState<"chat" | "feeds">("chat");
   const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null);
   const [sourceModalOpen, setSourceModalOpen] = useState(false);
+  const [userSources, setUserSources] = useState<UserSource[]>([]);
 
   const {
     sessions,
@@ -21,14 +24,36 @@ export function AppLayout() {
     activeSession,
     status,
     statusText,
+    statusHistory,
     setActiveId,
     newSession,
     closeSession,
     sendMessage,
     abort,
+    addNotification,
   } = useSessions();
 
-  // When switching sessions, clear the selected message
+  // Load persisted user sources on mount
+  useEffect(() => {
+    fetchSources().then(setUserSources).catch(console.error);
+  }, []);
+
+  // Auto-select the latest completed message with companies when streaming finishes
+  const prevStatusRef = useRef(status);
+  useEffect(() => {
+    const wasStreaming = prevStatusRef.current !== "idle" && prevStatusRef.current !== "done" && prevStatusRef.current !== "error";
+    prevStatusRef.current = status;
+    if (wasStreaming && status === "done") {
+      const msgs = activeSession?.messages ?? [];
+      for (let i = msgs.length - 1; i >= 0; i--) {
+        if (msgs[i].role === "assistant" && !msgs[i].isStreaming && msgs[i].companies?.length) {
+          setSelectedMessageId(msgs[i].id);
+          break;
+        }
+      }
+    }
+  }, [status, activeSession?.messages]);
+
   function handleSelectSession(id: string) {
     setActiveId(id);
     setSelectedMessageId(null);
@@ -39,12 +64,27 @@ export function AppLayout() {
     setSelectedMessageId(null);
   }
 
-  // Derive selected message from the active session
+  function handleSourceAdded(source: UserSource) {
+    setUserSources((prev) => [...prev, source]);
+
+    const typeLabel =
+      source.type === "pdf" ? "PDF"
+      : source.type === "docx" ? "DOCX"
+      : source.type === "url" ? "feed/page"
+      : "file";
+
+    addNotification(
+      `Source connected — **${source.name}** (${typeLabel}) · ${source.chunk_count} chunk${source.chunk_count !== 1 ? "s" : ""} ingested into the knowledge base.`
+    );
+  }
+
+  function handleSourceDeleted(id: string) {
+    setUserSources((prev) => prev.filter((s) => s.id !== id));
+  }
+
   const selectedMessage =
     activeSession?.messages.find((m) => m.id === selectedMessageId) ?? null;
 
-  // Fallback: if nothing is selected and the active session has a streaming
-  // assistant message, show its companies (live updating) in the panel
   const displayMessage =
     selectedMessage ??
     (() => {
@@ -73,6 +113,7 @@ export function AppLayout() {
         activeView={activeView}
         onNavChange={setActiveView}
         onAddSource={() => setSourceModalOpen(true)}
+        userSources={userSources}
       />
 
       <main className={styles.main}>
@@ -81,7 +122,7 @@ export function AppLayout() {
             sessions={sessions}
             activeId={activeId}
             status={status}
-            statusText={statusText}
+            statusHistory={statusHistory}
             selectedMessageId={selectedMessageId}
             onSend={sendMessage}
             onAbort={abort}
@@ -91,7 +132,7 @@ export function AppLayout() {
             onSelectMessage={setSelectedMessageId}
           />
         ) : (
-          <FeedsView />
+          <FeedsView userSources={userSources} />
         )}
       </main>
 
@@ -102,7 +143,12 @@ export function AppLayout() {
       />
 
       {sourceModalOpen && (
-        <AddSourceModal onClose={() => setSourceModalOpen(false)} />
+        <AddSourceModal
+          onClose={() => setSourceModalOpen(false)}
+          sources={userSources}
+          onSourceAdded={handleSourceAdded}
+          onSourceDeleted={handleSourceDeleted}
+        />
       )}
     </div>
   );

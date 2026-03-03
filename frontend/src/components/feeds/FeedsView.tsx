@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { RefreshCw, ExternalLink, Rss } from "lucide-react";
+import { RefreshCw, ExternalLink, Rss, FileText, Globe } from "lucide-react";
+import { UserSource } from "@/types";
 import { Spinner } from "@/components/ui/Spinner";
 import styles from "./FeedsView.module.css";
 
@@ -26,7 +27,11 @@ const FEEDS = [
   },
 ];
 
-export function FeedsView() {
+interface FeedsViewProps {
+  userSources?: UserSource[];
+}
+
+export function FeedsView({ userSources = [] }: FeedsViewProps) {
   const [refreshing, setRefreshing] = useState(false);
   const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
   const [error, setError] = useState("");
@@ -103,6 +108,44 @@ export function FeedsView() {
             </div>
           ))}
         </div>
+
+        {userSources.length > 0 && (
+          <>
+            <p className={styles.sectionLabel}>Your Sources</p>
+            <div className={styles.feedList}>
+              {userSources.map((s) => {
+                const isFile = s.type === "pdf" || s.type === "docx" || s.type === "file";
+                const typeLabel = s.type === "pdf" ? "PDF" : s.type === "docx" ? "DOCX" : s.type === "url" ? "URL" : "File";
+                const Icon = isFile ? FileText : Globe;
+                return (
+                  <div key={s.id} className={styles.feedCard}>
+                    <div className={styles.feedHeader}>
+                      <div className={styles.feedIconWrap}>
+                        <Icon size={14} color="var(--accent)" />
+                      </div>
+                      <div className={styles.feedMeta}>
+                        <span className={styles.feedName}>{s.name}</span>
+                        {s.url && (
+                          <span className={styles.feedLink}>
+                            {s.url.length > 60 ? s.url.slice(0, 60) + "…" : s.url}
+                          </span>
+                        )}
+                      </div>
+                      <span className={styles.activeBadge}>Active</span>
+                    </div>
+                    <div className={styles.feedUrl}>
+                      <span className={styles.feedUrlLabel}>{typeLabel}</span>
+                      <code className={styles.feedUrlText}>
+                        {s.chunk_count} chunk{s.chunk_count !== 1 ? "s" : ""} ingested
+                        {" · "}added {new Date(s.added_at).toLocaleDateString()}
+                      </code>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

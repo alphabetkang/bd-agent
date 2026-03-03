@@ -3,18 +3,20 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { X, Link, Upload, Trash2, FileText, Globe, Rss, CheckCircle } from "lucide-react";
 import { UserSource } from "@/types";
-import { addUrlSource, deleteSource, fetchSources, uploadSource } from "@/lib/api";
+import { addUrlSource, deleteSource, uploadSource } from "@/lib/api";
 import { Spinner } from "@/components/ui/Spinner";
 import styles from "./AddSourceModal.module.css";
 
 interface AddSourceModalProps {
   onClose: () => void;
+  sources: UserSource[];
+  onSourceAdded: (source: UserSource) => void;
+  onSourceDeleted: (id: string) => void;
 }
 
 type UploadState = "idle" | "loading" | "success" | "error";
 
-export function AddSourceModal({ onClose }: AddSourceModalProps) {
-  const [sources, setSources] = useState<UserSource[]>([]);
+export function AddSourceModal({ onClose, sources, onSourceAdded, onSourceDeleted }: AddSourceModalProps) {
   const [url, setUrl] = useState("");
   const [urlName, setUrlName] = useState("");
   const [urlState, setUrlState] = useState<UploadState>("idle");
@@ -24,10 +26,6 @@ export function AddSourceModal({ onClose }: AddSourceModalProps) {
   const [fileError, setFileError] = useState("");
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    fetchSources().then(setSources).catch(console.error);
-  }, []);
 
   // Close on Escape
   useEffect(() => {
@@ -45,11 +43,11 @@ export function AddSourceModal({ onClose }: AddSourceModalProps) {
     setUrlError("");
     try {
       const entry = await addUrlSource(trimmed, urlName.trim());
-      setSources((prev) => [...prev, entry]);
+      onSourceAdded(entry);
       setUrl("");
       setUrlName("");
       setUrlState("success");
-      setTimeout(() => setUrlState("idle"), 2000);
+      setTimeout(() => setUrlState("idle"), 2500);
     } catch (err: unknown) {
       setUrlError(err instanceof Error ? err.message : "Failed to add URL");
       setUrlState("error");
@@ -61,9 +59,9 @@ export function AddSourceModal({ onClose }: AddSourceModalProps) {
     setFileError("");
     try {
       const entry = await uploadSource(file);
-      setSources((prev) => [...prev, entry]);
+      onSourceAdded(entry);
       setFileState("success");
-      setTimeout(() => setFileState("idle"), 2000);
+      setTimeout(() => setFileState("idle"), 2500);
     } catch (err: unknown) {
       setFileError(err instanceof Error ? err.message : "Upload failed");
       setFileState("error");
@@ -84,22 +82,20 @@ export function AddSourceModal({ onClose }: AddSourceModalProps) {
   async function handleDelete(id: string) {
     try {
       await deleteSource(id);
-      setSources((prev) => prev.filter((s) => s.id !== id));
+      onSourceDeleted(id);
     } catch (err) {
       console.error("Delete failed:", err);
     }
   }
 
   function sourceIcon(type: UserSource["type"]) {
-    if (type === "pdf" || type === "docx" || type === "file")
-      return <FileText size={12} />;
+    if (type === "pdf" || type === "docx" || type === "file") return <FileText size={12} />;
     return <Globe size={12} />;
   }
 
   return (
     <div className={styles.overlay} onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className={styles.modal} role="dialog" aria-label="Add Data Source">
-        {/* Header */}
         <div className={styles.modalHeader}>
           <span className={styles.modalTitle}>Add Data Source</span>
           <button className={styles.closeBtn} onClick={onClose}>

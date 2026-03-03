@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { Message } from "@/types";
+import { ChatStatus, Message } from "@/types";
 import { MessageItem } from "./MessageItem";
 import styles from "./MessageList.module.css";
 
 interface MessageListProps {
   messages: Message[];
   selectedMessageId: string | null;
+  statusHistory: ChatStatus[];
   onSend: (query: string) => void;
   onSelectMessage: (id: string | null) => void;
 }
@@ -15,6 +16,7 @@ interface MessageListProps {
 export function MessageList({
   messages,
   selectedMessageId,
+  statusHistory,
   onSend,
   onSelectMessage,
 }: MessageListProps) {
@@ -56,6 +58,7 @@ export function MessageList({
           message={msg}
           selected={msg.id === selectedMessageId}
           onSelect={onSelectMessage}
+          statusHistory={msg.isStreaming ? statusHistory : undefined}
         />
       ))}
       <div ref={bottomRef} />

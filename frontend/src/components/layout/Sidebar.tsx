@@ -1,6 +1,7 @@
 "use client";
 
-import { Plus, Rss, MessageSquare, Settings } from "lucide-react";
+import { Plus, Rss, MessageSquare, Settings, FileText, Globe } from "lucide-react";
+import { UserSource } from "@/types";
 import styles from "./Sidebar.module.css";
 
 const FEEDS = [
@@ -15,9 +16,10 @@ interface SidebarProps {
   activeView: "chat" | "feeds";
   onNavChange: (view: "chat" | "feeds") => void;
   onAddSource: () => void;
+  userSources?: UserSource[];
 }
 
-export function Sidebar({ collapsed, onToggle, activeView, onNavChange, onAddSource }: SidebarProps) {
+export function Sidebar({ collapsed, onToggle, activeView, onNavChange, onAddSource, userSources = [] }: SidebarProps) {
   return (
     <aside className={`${styles.sidebar} ${collapsed ? styles.collapsed : ""}`}>
       {/* Logo + Add Source button */}
@@ -45,6 +47,19 @@ export function Sidebar({ collapsed, onToggle, activeView, onNavChange, onAddSou
                 <li key={f.name} className={styles.feedItem}>
                   <span className={`${styles.dot} ${f.active ? styles.dotActive : ""}`} />
                   <span className={styles.feedName}>{f.name}</span>
+                </li>
+              ))}
+              {userSources.map((s) => (
+                <li key={s.id} className={styles.feedItem}>
+                  <span className={`${styles.dot} ${styles.dotActive}`} />
+                  <span className={styles.feedSourceIcon}>
+                    {s.type === "pdf" || s.type === "docx" || s.type === "file"
+                      ? <FileText size={10} />
+                      : s.type === "url"
+                      ? <Globe size={10} />
+                      : <Rss size={10} />}
+                  </span>
+                  <span className={styles.feedName}>{s.name}</span>
                 </li>
               ))}
             </ul>
