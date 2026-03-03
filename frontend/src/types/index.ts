@@ -1,0 +1,30 @@
+export interface Company {
+  name: string;
+  context: string;
+  source: string;
+  url: string;
+}
+
+export type MessageRole = "user" | "assistant";
+
+export interface Message {
+  id: string;
+  role: MessageRole;
+  content: string;
+  companies?: Company[];
+  isStreaming?: boolean;
+}
+
+export type ChatStatus =
+  | "idle"
+  | "retrieving"
+  | "searching"
+  | "analysing"
+  | "extracting"
+  | "done"
+  | "error";
+
+export interface SSEEvent {
+  type: "status" | "token" | "companies" | "done" | "error";
+  content: string | { message?: string; text?: string; companies?: Company[] };
+}

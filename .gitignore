@@ -8,3 +8,20 @@ wheels/
 
 # Virtual environments
 .venv
+
+# Env / secrets
+.env
+.env.local
+.env.*.local
+
+# Vector store (regenerated on startup)
+backend/chroma_db/
+
+# Node
+node_modules/
+frontend/.next/
+frontend/out/
+
+# OS
+.DS_Store
+*.swp

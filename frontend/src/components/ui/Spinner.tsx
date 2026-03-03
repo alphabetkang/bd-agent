@@ -1,0 +1,15 @@
+import styles from "./Spinner.module.css";
+
+interface SpinnerProps {
+  size?: number;
+}
+
+export function Spinner({ size = 16 }: SpinnerProps) {
+  return (
+    <span
+      className={styles.spinner}
+      style={{ width: size, height: size, borderWidth: size > 20 ? 3 : 2 }}
+      aria-label="Loading"
+    />
+  );
+}

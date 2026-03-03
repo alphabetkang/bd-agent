@@ -1,0 +1,143 @@
+.wrapper {
+  display: flex;
+  gap: 10px;
+  animation: fadeIn 0.2s ease;
+}
+
+.user {
+  flex-direction: row-reverse;
+}
+
+.assistant {
+  flex-direction: row;
+}
+
+.avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius);
+  font-size: 10px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  align-self: flex-start;
+  margin-top: 2px;
+}
+
+.avatarUser {
+  background: var(--accent);
+  color: #0e0f13;
+}
+
+.avatarAssistant {
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+}
+
+.bubble {
+  max-width: 720px;
+  min-width: 0;
+}
+
+.userText {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 10px 14px;
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
+.markdownWrapper {
+  font-size: 13px;
+  color: var(--text-primary);
+  line-height: 1.6;
+}
+
+/* Markdown typography resets */
+.markdownWrapper p { margin-bottom: 10px; }
+.markdownWrapper p:last-child { margin-bottom: 0; }
+.markdownWrapper h1,
+.markdownWrapper h2,
+.markdownWrapper h3 {
+  font-weight: 600;
+  margin: 16px 0 8px;
+  color: var(--text-primary);
+}
+.markdownWrapper h1 { font-size: 18px; }
+.markdownWrapper h2 { font-size: 15px; }
+.markdownWrapper h3 { font-size: 13px; }
+.markdownWrapper ul,
+.markdownWrapper ol {
+  padding-left: 20px;
+  margin-bottom: 10px;
+}
+.markdownWrapper li { margin-bottom: 4px; }
+.markdownWrapper a {
+  color: var(--accent);
+  text-decoration: none;
+}
+.markdownWrapper a:hover { text-decoration: underline; }
+.markdownWrapper strong { font-weight: 600; }
+
+.cursor {
+  display: inline-block;
+  width: 2px;
+  height: 13px;
+  background: var(--accent);
+  margin-left: 2px;
+  vertical-align: text-bottom;
+  animation: blink 1s step-start infinite;
+}
+
+.thinkingDots {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  padding: 4px 0;
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  animation: bounce 1.4s infinite ease-in-out;
+}
+
+.dot:nth-child(2) { animation-delay: 0.2s; }
+.dot:nth-child(3) { animation-delay: 0.4s; }
+
+.companyCount {
+  margin-top: 10px;
+}
+
+.countBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--accent-muted);
+  color: var(--accent);
+  border: 1px solid rgba(255, 186, 40, 0.3);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+
+@keyframes bounce {
+  0%, 80%, 100% { transform: scale(0); opacity: 0.4; }
+  40%           { transform: scale(1); opacity: 1; }
+}
