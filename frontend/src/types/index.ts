@@ -29,6 +29,15 @@ export interface SSEEvent {
   content: string | { message?: string; text?: string; companies?: Company[] };
 }
 
+export interface UserSource {
+  id: string;
+  name: string;
+  type: "url" | "pdf" | "docx" | "file";
+  url: string | null;
+  added_at: string;
+  chunk_count: number;
+}
+
 export interface ChatSession {
   id: string;
   title: string;

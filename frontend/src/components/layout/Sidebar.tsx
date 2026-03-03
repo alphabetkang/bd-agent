@@ -1,4 +1,6 @@
-import { Rss, MessageSquare, Settings } from "lucide-react";
+"use client";
+
+import { Plus, Rss, MessageSquare, Settings } from "lucide-react";
 import styles from "./Sidebar.module.css";
 
 const FEEDS = [
@@ -12,14 +14,26 @@ interface SidebarProps {
   onToggle: () => void;
   activeView: "chat" | "feeds";
   onNavChange: (view: "chat" | "feeds") => void;
+  onAddSource: () => void;
 }
 
-export function Sidebar({ collapsed, onToggle, activeView, onNavChange }: SidebarProps) {
+export function Sidebar({ collapsed, onToggle, activeView, onNavChange, onAddSource }: SidebarProps) {
   return (
     <aside className={`${styles.sidebar} ${collapsed ? styles.collapsed : ""}`}>
-      <div className={styles.logo} onClick={onToggle} title="Toggle sidebar">
-        <MessageSquare size={16} color="var(--accent)" />
-        {!collapsed && <span className={styles.logoText}>BD Agent</span>}
+      {/* Logo + Add Source button */}
+      <div className={styles.logoRow}>
+        <div className={styles.logo} onClick={onToggle} title="Toggle sidebar">
+          <MessageSquare size={16} color="var(--accent)" />
+          {!collapsed && <span className={styles.logoText}>BD Agent</span>}
+        </div>
+        <button
+          className={styles.addBtn}
+          onClick={onAddSource}
+          title="Add data source"
+        >
+          <Plus size={14} />
+          {!collapsed && <span>Add Source</span>}
+        </button>
       </div>
 
       {!collapsed && (
@@ -29,9 +43,7 @@ export function Sidebar({ collapsed, onToggle, activeView, onNavChange }: Sideba
             <ul className={styles.feedList}>
               {FEEDS.map((f) => (
                 <li key={f.name} className={styles.feedItem}>
-                  <span
-                    className={`${styles.dot} ${f.active ? styles.dotActive : ""}`}
-                  />
+                  <span className={`${styles.dot} ${f.active ? styles.dotActive : ""}`} />
                   <span className={styles.feedName}>{f.name}</span>
                 </li>
               ))}

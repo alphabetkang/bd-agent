@@ -5,6 +5,7 @@ import { Sidebar } from "./Sidebar";
 import { ChatInterface } from "@/components/chat/ChatInterface";
 import { CompaniesPanel } from "@/components/companies/CompaniesPanel";
 import { FeedsView } from "@/components/feeds/FeedsView";
+import { AddSourceModal } from "@/components/sources/AddSourceModal";
 import { useSessions } from "@/hooks/useSessions";
 import styles from "./AppLayout.module.css";
 
@@ -12,6 +13,7 @@ export function AppLayout() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [activeView, setActiveView] = useState<"chat" | "feeds">("chat");
   const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null);
+  const [sourceModalOpen, setSourceModalOpen] = useState(false);
 
   const {
     sessions,
@@ -70,6 +72,7 @@ export function AppLayout() {
         onToggle={() => setSidebarCollapsed((v) => !v)}
         activeView={activeView}
         onNavChange={setActiveView}
+        onAddSource={() => setSourceModalOpen(true)}
       />
 
       <main className={styles.main}>
@@ -97,6 +100,10 @@ export function AppLayout() {
         latestQuery={latestQuery}
         isLoading={isStreaming}
       />
+
+      {sourceModalOpen && (
+        <AddSourceModal onClose={() => setSourceModalOpen(false)} />
+      )}
     </div>
   );
 }
