@@ -5,41 +5,63 @@ import { Sidebar } from "./Sidebar";
 import { ChatInterface } from "@/components/chat/ChatInterface";
 import { CompaniesPanel } from "@/components/companies/CompaniesPanel";
 import { FeedsView } from "@/components/feeds/FeedsView";
-import { useChat } from "@/hooks/useChat";
+import { useSessions } from "@/hooks/useSessions";
 import styles from "./AppLayout.module.css";
-import { Company } from "@/types";
 
 export function AppLayout() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [activeView, setActiveView] = useState<"chat" | "feeds">("chat");
-  const { messages, status, statusText, sendMessage, abort } = useChat();
+  const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null);
 
-  // Collect companies from the latest assistant message that has them
-  const latestCompanies: Company[] = (() => {
-    for (let i = messages.length - 1; i >= 0; i--) {
-      if (messages[i].role === "assistant" && messages[i].companies?.length) {
-        return messages[i].companies!;
-      }
-    }
-    return [];
-  })();
+  const {
+    sessions,
+    activeId,
+    activeSession,
+    status,
+    statusText,
+    setActiveId,
+    newSession,
+    closeSession,
+    sendMessage,
+    abort,
+  } = useSessions();
 
-  // The current answer text for the report
-  const latestAnswer = (() => {
-    for (let i = messages.length - 1; i >= 0; i--) {
-      if (messages[i].role === "assistant" && messages[i].content) {
-        return messages[i].content;
+  // When switching sessions, clear the selected message
+  function handleSelectSession(id: string) {
+    setActiveId(id);
+    setSelectedMessageId(null);
+  }
+
+  function handleNewSession() {
+    newSession();
+    setSelectedMessageId(null);
+  }
+
+  // Derive selected message from the active session
+  const selectedMessage =
+    activeSession?.messages.find((m) => m.id === selectedMessageId) ?? null;
+
+  // Fallback: if nothing is selected and the active session has a streaming
+  // assistant message, show its companies (live updating) in the panel
+  const displayMessage =
+    selectedMessage ??
+    (() => {
+      const msgs = activeSession?.messages ?? [];
+      for (let i = msgs.length - 1; i >= 0; i--) {
+        if (msgs[i].role === "assistant" && msgs[i].isStreaming) return msgs[i];
       }
-    }
-    return "";
-  })();
+      return null;
+    })();
 
   const latestQuery = (() => {
-    for (let i = messages.length - 1; i >= 0; i--) {
-      if (messages[i].role === "user") return messages[i].content;
+    const msgs = activeSession?.messages ?? [];
+    for (let i = msgs.length - 1; i >= 0; i--) {
+      if (msgs[i].role === "user") return msgs[i].content;
     }
     return "";
   })();
+
+  const isStreaming = status !== "idle" && status !== "done" && status !== "error";
 
   return (
     <div className={styles.appLayout}>
@@ -53,11 +75,17 @@ export function AppLayout() {
       <main className={styles.main}>
         {activeView === "chat" ? (
           <ChatInterface
-            messages={messages}
+            sessions={sessions}
+            activeId={activeId}
             status={status}
             statusText={statusText}
+            selectedMessageId={selectedMessageId}
             onSend={sendMessage}
             onAbort={abort}
+            onSelectSession={handleSelectSession}
+            onNewSession={handleNewSession}
+            onCloseSession={closeSession}
+            onSelectMessage={setSelectedMessageId}
           />
         ) : (
           <FeedsView />
@@ -65,10 +93,9 @@ export function AppLayout() {
       </main>
 
       <CompaniesPanel
-        companies={latestCompanies}
-        query={latestQuery}
-        answer={latestAnswer}
-        isLoading={status !== "idle" && status !== "done" && status !== "error"}
+        selectedMessage={displayMessage}
+        latestQuery={latestQuery}
+        isLoading={isStreaming}
       />
     </div>
   );

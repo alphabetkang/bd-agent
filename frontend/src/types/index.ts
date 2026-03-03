@@ -28,3 +28,10 @@ export interface SSEEvent {
   type: "status" | "token" | "companies" | "done" | "error";
   content: string | { message?: string; text?: string; companies?: Company[] };
 }
+
+export interface ChatSession {
+  id: string;
+  title: string;
+  createdAt: number;
+  messages: Message[];
+}

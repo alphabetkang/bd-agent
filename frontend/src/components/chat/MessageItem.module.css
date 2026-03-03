@@ -2,6 +2,23 @@
   display: flex;
   gap: 10px;
   animation: fadeIn 0.2s ease;
+  border-radius: var(--radius-lg);
+  padding: 4px;
+  margin: -4px;
+  transition: background var(--transition);
+}
+
+.selectable {
+  cursor: pointer;
+}
+
+.selectable:hover {
+  background: rgba(255, 186, 40, 0.04);
+}
+
+.selected {
+  background: rgba(255, 186, 40, 0.08);
+  outline: 1px solid rgba(255, 186, 40, 0.25);
 }
 
 .user {
@@ -125,6 +142,17 @@
   background: var(--accent-muted);
   color: var(--accent);
   border: 1px solid rgba(255, 186, 40, 0.3);
+  transition: all var(--transition);
+}
+
+.countBadgeSelected {
+  background: rgba(255, 186, 40, 0.3);
+  border-color: var(--accent);
+}
+
+.viewHint {
+  font-weight: 400;
+  opacity: 0.7;
 }
 
 @keyframes fadeIn {

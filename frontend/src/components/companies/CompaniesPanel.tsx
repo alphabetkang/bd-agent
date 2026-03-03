@@ -2,32 +2,29 @@
 
 import { useState } from "react";
 import { Download, Building2 } from "lucide-react";
-import { Company } from "@/types";
+import { Company, Message } from "@/types";
 import { CompanyCard } from "./CompanyCard";
 import { Spinner } from "@/components/ui/Spinner";
 import { exportReport } from "@/lib/api";
 import styles from "./CompaniesPanel.module.css";
 
 interface CompaniesPanelProps {
-  companies: Company[];
-  query: string;
-  answer: string;
+  selectedMessage: Message | null;
+  latestQuery: string;
   isLoading: boolean;
 }
 
-export function CompaniesPanel({
-  companies,
-  query,
-  answer,
-  isLoading,
-}: CompaniesPanelProps) {
+export function CompaniesPanel({ selectedMessage, latestQuery, isLoading }: CompaniesPanelProps) {
   const [exporting, setExporting] = useState(false);
+
+  const companies: Company[] = selectedMessage?.companies ?? [];
+  const answer = selectedMessage?.content ?? "";
 
   async function handleExport() {
     if (exporting || !companies.length) return;
     setExporting(true);
     try {
-      await exportReport(query, companies, answer);
+      await exportReport(latestQuery, companies, answer);
     } catch (err) {
       console.error("Export failed:", err);
     } finally {
@@ -53,11 +50,7 @@ export function CompaniesPanel({
             disabled={exporting}
             title="Export report"
           >
-            {exporting ? (
-              <Spinner size={12} />
-            ) : (
-              <Download size={12} />
-            )}
+            {exporting ? <Spinner size={12} /> : <Download size={12} />}
             <span>{exporting ? "Exporting..." : "Export Report"}</span>
           </button>
         )}
@@ -72,7 +65,11 @@ export function CompaniesPanel({
         ) : companies.length === 0 ? (
           <div className={styles.empty}>
             <Building2 size={24} color="var(--border)" />
-            <p>Companies identified from your query will appear here.</p>
+            <p>
+              {selectedMessage
+                ? "No companies identified in this response."
+                : "Click an AI response to view its companies here."}
+            </p>
           </div>
         ) : (
           <div className={styles.companyList}>

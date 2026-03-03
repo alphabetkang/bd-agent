@@ -1,28 +1,41 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { ChatStatus, Message } from "@/types";
+import { ChatSession, ChatStatus } from "@/types";
 import { MessageList } from "./MessageList";
 import { ChatInput } from "./ChatInput";
+import { ChatTabs } from "./ChatTabs";
 import { Spinner } from "@/components/ui/Spinner";
 import styles from "./ChatInterface.module.css";
 
 interface ChatInterfaceProps {
-  messages: Message[];
+  sessions: ChatSession[];
+  activeId: string;
   status: ChatStatus;
   statusText: string;
+  selectedMessageId: string | null;
   onSend: (query: string) => void;
   onAbort: () => void;
+  onSelectSession: (id: string) => void;
+  onNewSession: () => void;
+  onCloseSession: (id: string) => void;
+  onSelectMessage: (messageId: string | null) => void;
 }
 
 export function ChatInterface({
-  messages,
+  sessions,
+  activeId,
   status,
   statusText,
+  selectedMessageId,
   onSend,
   onAbort,
+  onSelectSession,
+  onNewSession,
+  onCloseSession,
+  onSelectMessage,
 }: ChatInterfaceProps) {
   const isStreaming = status !== "idle" && status !== "done" && status !== "error";
+  const activeSession = sessions.find((s) => s.id === activeId)!;
 
   return (
     <div className={styles.chatInterface}>
@@ -36,13 +49,22 @@ export function ChatInterface({
         )}
       </header>
 
-      <MessageList messages={messages} onSend={onSend} />
-
-      <ChatInput
-        onSend={onSend}
-        onAbort={onAbort}
-        isStreaming={isStreaming}
+      <ChatTabs
+        sessions={sessions}
+        activeId={activeId}
+        onSelect={onSelectSession}
+        onNew={onNewSession}
+        onClose={onCloseSession}
       />
+
+      <MessageList
+        messages={activeSession?.messages ?? []}
+        selectedMessageId={selectedMessageId}
+        onSend={onSend}
+        onSelectMessage={onSelectMessage}
+      />
+
+      <ChatInput onSend={onSend} onAbort={onAbort} isStreaming={isStreaming} />
     </div>
   );
 }
