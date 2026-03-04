@@ -18,11 +18,13 @@ Staying on top of business news is time-consuming and cognitively expensive. In 
 
 ## Evaluation Questions
 
-| Question | Expected Answer |
-| :--- | :--- |
-| What are some tech companies in LA that need space? | Here are 5 tech companies likely to need space in the next 12 months |
-| Is there current news on biotech funding in Boston? | No, biotech funding news has been sparse for the past 6 months |
-| What oil & gas companies require office space in the next 6 months and make over $5M ARR? | Here is a list of companies that meet your requirements |
+
+| Question                                                                                  | Expected Answer                                                      |
+| ----------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| What are some tech companies in LA that need space?                                       | Here are 5 tech companies likely to need space in the next 12 months |
+| Is there current news on biotech funding in Boston?                                       | No, biotech funding news has been sparse for the past 6 months       |
+| What oil & gas companies require office space in the next 6 months and make over $5M ARR? | Here is a list of companies that meet your requirements              |
+
 
 ---
 
@@ -43,10 +45,12 @@ Over time, this could evolve into a more flexible platform beyond CRE. It could 
 ## RAG and Agent Components
 
 **RAG components:**
+
 - News feed retrieval from RSS sources (chunked, embedded, and stored in a vector database)
 - Augmented answer generation grounded in retrieved news content
 
 **Agent components:**
+
 - Reasoning about which news feed chunks to retrieve for a given query
 - Deciding whether retrieved context is sufficient or whether a live web search is needed
 - Researching and identifying specific companies mentioned or implied by the query
@@ -56,13 +60,15 @@ Over time, this could evolve into a more flexible platform beyond CRE. It could 
 
 ## Data Sources and External APIs
 
-| Source | Type | Purpose |
-| :--- | :--- | :--- |
-| TechCrunch | RSS feed | Tech industry news and funding announcements |
-| Boston Business Journal | RSS feed | Local Boston-area business news |
-| Yahoo Finance | RSS feed | Broader financial and market news |
-| Tavily | Web Search API | Live web search for queries that need fresher context |
-| User-uploaded PDFs / DOCX | File upload | Additional context ingested into the vector database via the same chunking pipeline |
+
+| Source                    | Type           | Purpose                                                                             |
+| ------------------------- | -------------- | ----------------------------------------------------------------------------------- |
+| TechCrunch                | RSS feed       | Tech industry news and funding announcements                                        |
+| Boston Business Journal   | RSS feed       | Local Boston-area business news                                                     |
+| Yahoo Finance             | RSS feed       | Broader financial and market news                                                   |
+| Tavily                    | Web Search API | Live web search for queries that need fresher context                               |
+| User-uploaded PDFs / DOCX | File upload    | Additional context ingested into the vector database via the same chunking pipeline |
+
 
 ---
 
@@ -80,14 +86,16 @@ Deployed locally at `http://localhost:3000`. See `README.md` for setup instructi
 
 ## RAGAS Pipeline Evaluation
 
-| Metric | Score |
-| :--- | :--- |
-| Faithfulness | — |
-| Response Relevance | — |
-| Context Precision | — |
-| Context Recall | — |
 
-> **TODO:** Run RAGAS evaluation and populate results.
+| Metric             | Score |
+| ------------------ | ----- |
+| Faithfulness       | —     |
+| Response Relevance | —     |
+| Context Precision  | —     |
+| Context Recall     | —     |
+
+
+> Run `python -m evaluation.ragas_eval` from `backend/` to evaluate. Use `--update-cert` to auto-populate this table.
 
 ---
 
@@ -108,12 +116,14 @@ Two techniques were selected to improve retrieval quality:
 
 ## Post-Improvement RAGAS Results
 
-| Metric | Baseline | With Advanced Retrieval | Delta |
-| :--- | :--- | :--- | :--- |
-| Faithfulness | — | — | — |
-| Response Relevance | — | — | — |
-| Context Precision | — | — | — |
-| Context Recall | — | — | — |
+
+| Metric             | Baseline | With Advanced Retrieval | Delta |
+| ------------------ | -------- | ----------------------- | ----- |
+| Faithfulness       | —        | —                       | —     |
+| Response Relevance | —        | —                       | —     |
+| Context Precision  | —        | —                       | —     |
+| Context Recall     | —        | —                       | —     |
+
 
 > **TODO:** Run RAGAS on improved pipeline and populate results.
 
@@ -127,6 +137,7 @@ Yes — the dense vector retrieval approach will be retained for Demo Day, augme
 
 ## Deliverables
 
-- [ ] 5-minute Loom demo video
-- [x] Written document addressing each question (this file)
-- [x] All relevant code (see `backend/` and `frontend/`)
+- 5-minute Loom demo video
+- Written document addressing each question (this file)
+- All relevant code (see `backend/` and `frontend/`)
+
