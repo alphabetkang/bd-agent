@@ -68,7 +68,7 @@ export function CompaniesPanel({ selectedMessage, latestQuery, isLoading }: Comp
             <p>
               {selectedMessage
                 ? "No companies identified in this response."
-                : "Click an AI response to view its companies here."}
+                : "Run a query to identify companies."}
             </p>
           </div>
         ) : (

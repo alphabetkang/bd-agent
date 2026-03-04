@@ -1,15 +1,16 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { Check, CheckCircle } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { Check, CheckCircle } from "lucide-react";
 import { ChatStatus, Message } from "@/types";
 import { Spinner } from "@/components/ui/Spinner";
 import styles from "./MessageItem.module.css";
 
 interface MessageItemProps {
   message: Message;
+  response: Message | null;
   selected: boolean;
   onSelect: (id: string | null) => void;
   statusHistory?: ChatStatus[];
@@ -24,9 +25,8 @@ const PIPELINE_STEPS: { id: ChatStatus; label: string }[] = [
 
 const STEP_IDS = new Set<ChatStatus>(PIPELINE_STEPS.map((s) => s.id));
 
-export function MessageItem({ message, selected, onSelect, statusHistory }: MessageItemProps) {
-  const isUser = message.role === "user";
-  const isSelectable = !isUser && !!message.companies?.length && !message.isStreaming;
+export function MessageItem({ message, response, selected, onSelect, statusHistory }: MessageItemProps) {
+  const isSelectable = !!response?.companies?.length && !response?.isStreaming;
 
   const [visibleSteps, setVisibleSteps] = useState<{ id: ChatStatus; state: "active" | "done" }[]>([]);
   const activatedAtRef = useRef<Partial<Record<ChatStatus, number>>>({});
@@ -34,7 +34,6 @@ export function MessageItem({ message, selected, onSelect, statusHistory }: Mess
   const processedLenRef = useRef(0);
   const prevStepRef = useRef<ChatStatus | undefined>(undefined);
 
-  // Reset all tracking refs on unmount so React StrictMode's remount starts clean
   useEffect(() => {
     return () => {
       timersRef.current.forEach(clearTimeout);
@@ -46,7 +45,7 @@ export function MessageItem({ message, selected, onSelect, statusHistory }: Mess
   }, []);
 
   useEffect(() => {
-    if (!message.isStreaming || !statusHistory?.length) return;
+    if (!response?.isStreaming || !statusHistory?.length) return;
 
     const newEntries = statusHistory
       .slice(processedLenRef.current)
@@ -61,7 +60,6 @@ export function MessageItem({ message, selected, onSelect, statusHistory }: Mess
     newEntries.forEach((status, i) => {
       const predecessor = i === 0 ? prevStepRef.current : newEntries[i - 1];
 
-      // Activate this step immediately (synchronous — no timer, so StrictMode can't cancel it)
       activatedAtRef.current[status] = Date.now();
       setVisibleSteps((prev) =>
         prev.some((s) => s.id === status)
@@ -69,7 +67,6 @@ export function MessageItem({ message, selected, onSelect, statusHistory }: Mess
           : [...prev, { id: status, state: "active" as const }]
       );
 
-      // Schedule predecessor → done after ensuring it was shown for at least 500ms
       if (predecessor && STEP_IDS.has(predecessor)) {
         const elapsed = Date.now() - (activatedAtRef.current[predecessor] ?? Date.now() - 500);
         const delay = Math.max(0, 500 - elapsed);
@@ -83,11 +80,11 @@ export function MessageItem({ message, selected, onSelect, statusHistory }: Mess
     });
 
     prevStepRef.current = newEntries[newEntries.length - 1];
-  }, [statusHistory, message.isStreaming]);
+  }, [statusHistory, response?.isStreaming]);
 
   function handleClick() {
-    if (!isSelectable) return;
-    onSelect(selected ? null : message.id);
+    if (!response || !isSelectable) return;
+    onSelect(selected ? null : response.id);
   }
 
   if (message.isNotification) {
@@ -103,63 +100,43 @@ export function MessageItem({ message, selected, onSelect, statusHistory }: Mess
 
   return (
     <div
-      className={`${styles.wrapper} ${isUser ? styles.user : styles.assistant} ${selected ? styles.selected : ""} ${isSelectable ? styles.selectable : ""}`}
+      className={`${styles.command} ${selected ? styles.selected : ""} ${isSelectable ? styles.selectable : ""}`}
       onClick={handleClick}
     >
-      <div className={`${styles.avatar} ${isUser ? styles.avatarUser : styles.avatarAssistant}`}>
-        {isUser ? "U" : "AI"}
+      <div className={styles.commandRow}>
+        <span className={styles.prompt}>›</span>
+        <span className={styles.commandText}>{message.content}</span>
+        {response?.isStreaming && <Spinner size={11} />}
       </div>
 
-      <div className={styles.bubble}>
-        {isUser ? (
-          <p className={styles.userText}>{message.content}</p>
-        ) : (
-          <div className={styles.markdownWrapper}>
-            {message.isStreaming && visibleSteps.length > 0 && (
-              <div className={styles.stepLog}>
-                {visibleSteps.map(({ id, state }) => {
-                  const step = PIPELINE_STEPS.find((s) => s.id === id)!;
-                  return (
-                    <div
-                      key={id}
-                      className={`${styles.stepItem} ${state === "done" ? styles.stepDone : styles.stepActive}`}
-                    >
-                      <span className={styles.stepIcon}>
-                        {state === "done" ? <Check size={11} /> : <Spinner size={11} />}
-                      </span>
-                      <span>{step.label}</span>
-                    </div>
-                  );
-                })}
+      {response?.isStreaming && visibleSteps.length > 0 && (
+        <div className={styles.stepLog}>
+          {visibleSteps.map(({ id, state }) => {
+            const step = PIPELINE_STEPS.find((s) => s.id === id)!;
+            return (
+              <div
+                key={id}
+                className={`${styles.stepItem} ${state === "done" ? styles.stepDone : styles.stepActive}`}
+              >
+                <span className={styles.stepIcon}>
+                  {state === "done" ? <Check size={11} /> : <Spinner size={11} />}
+                </span>
+                <span>{step.label}</span>
               </div>
-            )}
-            {message.content ? (
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                {message.content}
-              </ReactMarkdown>
-            ) : message.isStreaming ? (
-              <div className={styles.thinkingDots}>
-                <span className={styles.dot} />
-                <span className={styles.dot} />
-                <span className={styles.dot} />
-              </div>
-            ) : null}
-            {message.isStreaming && message.content && (
-              <span className={styles.cursor} aria-hidden />
-            )}
-          </div>
-        )}
+            );
+          })}
+        </div>
+      )}
 
-        {!isUser && message.companies && message.companies.length > 0 && (
-          <div className={styles.companyCount}>
-            <span className={`${styles.countBadge} ${selected ? styles.countBadgeSelected : ""}`}>
-              {message.companies.length}{" "}
-              {message.companies.length === 1 ? "company" : "companies"} identified
-              {isSelectable && !selected && <span className={styles.viewHint}> · click to view</span>}
-            </span>
-          </div>
-        )}
-      </div>
+      {response && response.companies && response.companies.length > 0 && (
+        <div className={styles.companyCount}>
+          <span className={`${styles.countBadge} ${selected ? styles.countBadgeSelected : ""}`}>
+            {response.companies.length}{" "}
+            {response.companies.length === 1 ? "company" : "companies"} identified
+            {isSelectable && !selected && <span className={styles.viewHint}> · click to view</span>}
+          </span>
+        </div>
+      )}
     </div>
   );
 }

@@ -26,7 +26,19 @@ export function MessageList({
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  if (messages.length === 0) {
+  // Build pairs: { command (user/notification), response (assistant | null) }
+  const items: { command: Message; response: Message | null }[] = [];
+  for (let i = 0; i < messages.length; i++) {
+    if (messages[i].isNotification) {
+      items.push({ command: messages[i], response: null });
+    } else if (messages[i].role === "user") {
+      const next = messages[i + 1];
+      const response = next?.role === "assistant" ? next : null;
+      items.push({ command: messages[i], response });
+    }
+  }
+
+  if (items.length === 0) {
     return (
       <div className={styles.empty}>
         <div className={styles.emptyInner}>
@@ -52,13 +64,14 @@ export function MessageList({
 
   return (
     <div className={styles.list}>
-      {messages.map((msg) => (
+      {items.map(({ command, response }) => (
         <MessageItem
-          key={msg.id}
-          message={msg}
-          selected={msg.id === selectedMessageId}
+          key={command.id}
+          message={command}
+          response={response}
+          selected={response?.id === selectedMessageId}
           onSelect={onSelectMessage}
-          statusHistory={msg.isStreaming ? statusHistory : undefined}
+          statusHistory={response?.isStreaming ? statusHistory : undefined}
         />
       ))}
       <div ref={bottomRef} />
