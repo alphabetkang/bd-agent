@@ -137,8 +137,6 @@ Return ONLY a valid JSON array — no markdown, no explanation. Each object must
   - "context": one sentence explaining why this company is relevant to the query (string)
   - "source": the news source it was found in, or "Web Search" (string)
   - "url": the direct URL of the article or page where this company is mentioned (string).
-           Each context entry has a "URL: https://..." line — use that URL.
-           Always provide a URL if the company appears in any context entry. Only use "" if truly absent.
 
 If no companies are found, return an empty array: []""",
         ),
@@ -148,10 +146,10 @@ If no companies are found, return an empty array: []""",
 
 Answer: {final_answer}
 
-News context (each entry has a URL line — use it for url field):
+News context:
 {rag_context}
 
-Web context (each entry has a URL line — use it for url field):
+Web context:
 {web_context}
 
 Return the JSON array of companies:""",
@@ -186,26 +184,5 @@ async def company_extraction_node(state: ResearchState) -> dict:
     except json.JSONDecodeError:
         logger.warning("Could not parse company extraction JSON: %s", raw[:200])
         companies = []
-
-    # Fallback: for any company missing a URL, scan the context for a URL
-    # near the company name and use the closest one found.
-    if companies:
-        combined_context = state["rag_context"] + "\n\n" + state["web_context"]
-        for company in companies:
-            if company.get("url"):
-                continue
-            name = company.get("name", "")
-            if not name:
-                continue
-            # Find all positions where the company name appears (case-insensitive)
-            for match in re.finditer(re.escape(name), combined_context, re.IGNORECASE):
-                # Search a window of 800 chars around the match for a URL
-                start = max(0, match.start() - 400)
-                end = min(len(combined_context), match.end() + 400)
-                window = combined_context[start:end]
-                url_match = re.search(r'https?://[^\s\)\]"\']+', window)
-                if url_match:
-                    company["url"] = url_match.group(0).rstrip(".,;")
-                    break
 
     return {"companies": companies}

@@ -1,10 +1,18 @@
 [
   {
-    "id": "cfbe25a0-99c2-4850-a196-d1189a402fdf",
+    "id": "7f494880-24e8-40ff-accd-f6f16389ce71",
+    "name": "GlobalSt",
+    "type": "url",
+    "url": "https://www.globest.com/rss/",
+    "added_at": "2026-03-04T00:10:03.800394",
+    "chunk_count": 1
+  },
+  {
+    "id": "2367e4b2-0e36-4623-b52c-5344ec15d12d",
     "name": "BisNow",
     "type": "url",
     "url": "https://www.bisnow.com/rss-feed/boston",
-    "added_at": "2026-03-03T21:52:04.933065",
+    "added_at": "2026-03-04T00:11:36.038915",
     "chunk_count": 30
   }
 ]
