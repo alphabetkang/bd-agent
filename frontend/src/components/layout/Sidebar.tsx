@@ -28,14 +28,14 @@ export function Sidebar({ collapsed, onToggle, activeView, onNavChange, onAddSou
           <MessageSquare size={16} color="var(--accent)" />
           {!collapsed && <span className={styles.logoText}>BD Agent</span>}
         </div>
-        <button
+        {/* <button
           className={styles.addBtn}
           onClick={onAddSource}
           title="Add data source"
         >
           <Plus size={14} />
           {!collapsed && <span>Add Source</span>}
-        </button>
+        </button> */}
       </div>
 
       {!collapsed && (

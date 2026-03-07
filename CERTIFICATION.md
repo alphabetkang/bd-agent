@@ -46,7 +46,7 @@ Over time, this could evolve into a more flexible platform beyond CRE. It could 
 
 **RAG components:**
 
-- News feed retrieval from RSS sources (chunked, embedded, and stored in a vector database)
+- News feed retrieval from RSS sources (chunked, embedded, and stored in a vector database). For now, this will be only TechCrunch.
 - Augmented answer generation grounded in retrieved news content
 
 **Agent components:**
@@ -64,10 +64,15 @@ Over time, this could evolve into a more flexible platform beyond CRE. It could 
 | Source                    | Type           | Purpose                                                                             |
 | ------------------------- | -------------- | ----------------------------------------------------------------------------------- |
 | TechCrunch                | RSS feed       | Tech industry news and funding announcements                                        |
+
+### Future Implementations:
+
+| Source                    | Type           | Purpose                                                                             |
+| ------------------------- | -------------- | ----------------------------------------------------------------------------------- |
 | Boston Business Journal   | RSS feed       | Local Boston-area business news                                                     |
 | Yahoo Finance             | RSS feed       | Broader financial and market news                                                   |
 | Tavily                    | Web Search API | Live web search for queries that need fresher context                               |
-| User-uploaded PDFs / DOCX | File upload    | Additional context ingested into the vector database via the same chunking pipeline |
+| User-uploaded PDFs / DOCX | File upload    | Additional context ingested into the vector database via the same chunking pipeline  |
 
 
 ---

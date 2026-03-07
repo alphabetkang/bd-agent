@@ -64,36 +64,36 @@ def rag_retrieval_node(state: ResearchState) -> dict:
 # Node 2: Web search via Tavily
 # ---------------------------------------------------------------------------
 
-def web_search_node(state: ResearchState) -> dict:
-    """Search the web for up-to-date information using Tavily."""
-    try:
-        client = TavilyClient(api_key=settings.tavily_api_key)
-        results = client.search(
-            query=state["query"],
-            search_depth="advanced",
-            max_results=5,
-        )
-        passages = []
-        web_source_docs = []
-        rag_count = len(state.get("source_docs", []))
-        for i, r in enumerate(results.get("results", [])):
-            title = r.get("title", "")
-            url = r.get("url", "")
-            content = r.get("content", "")
-            passages.append(f"[{title}]\nURL: {url}\n{content[:600]}")
-            web_source_docs.append({
-                "id": str(rag_count + i + 1),
-                "title": title,
-                "url": url,
-                "source": "Web Search",
-                "text": content,
-            })
-        context = "\n\n---\n\n".join(passages)
-        logger.info("Tavily returned %d results", len(passages))
-        return {"web_context": context, "web_source_docs": web_source_docs}
-    except Exception as exc:
-        logger.error("Tavily search failed: %s", exc)
-        return {"web_context": "Web search unavailable.", "web_source_docs": []}
+# def web_search_node(state: ResearchState) -> dict:
+#     """Search the web for up-to-date information using Tavily."""
+#     try:
+#         client = TavilyClient(api_key=settings.tavily_api_key)
+#         results = client.search(
+#             query=state["query"],
+#             search_depth="advanced",
+#             max_results=5,
+#         )
+#         passages = []
+#         web_source_docs = []
+#         rag_count = len(state.get("source_docs", []))
+#         for i, r in enumerate(results.get("results", [])):
+#             title = r.get("title", "")
+#             url = r.get("url", "")
+#             content = r.get("content", "")
+#             passages.append(f"[{title}]\nURL: {url}\n{content[:600]}")
+#             web_source_docs.append({
+#                 "id": str(rag_count + i + 1),
+#                 "title": title,
+#                 "url": url,
+#                 "source": "Web Search",
+#                 "text": content,
+#             })
+#         context = "\n\n---\n\n".join(passages)
+#         logger.info("Tavily returned %d results", len(passages))
+#         return {"web_context": context, "web_source_docs": web_source_docs}
+#     except Exception as exc:
+#         logger.error("Tavily search failed: %s", exc)
+#         return {"web_context": "Web search unavailable.", "web_source_docs": []}
 
 
 # ---------------------------------------------------------------------------

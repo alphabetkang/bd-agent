@@ -5,7 +5,7 @@ from agents.nodes import (
     company_extraction_node,
     rag_retrieval_node,
     synthesis_node,
-    web_search_node,
+    # web_search_node,
 )
 from agents.state import ResearchState
 
