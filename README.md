@@ -1,37 +1,40 @@
 # BD Agent — Business Development Intelligence Platform
 
-A real-time AI research assistant that identifies and surfaces relevant companies from live news feeds, web searches, and custom documents. Built for business development and sales teams who need to move fast.
+A real-time AI research tool that surfaces relevant companies from live TechCrunch news. Read articles in-app, ask questions about them, and get cited answers grounded in the article text.
 
 ---
 
 ## What It Does
 
-Ask a research question — BD Agent searches across multiple sources simultaneously, synthesizes the findings with an LLM, and automatically extracts the companies mentioned. Results stream back in real time.
+BD Agent ingests TechCrunch articles every 60 minutes, extracts the companies mentioned, and presents them as a browsable article dashboard. Click any article to open a split-pane view: the full article on the left, an Intelligence Chat on the right.
 
-**Example queries:**
-- *"Which Boston-area biotech companies are raising Series B funding?"*
-- *"SaaS companies expanding into healthcare IT this quarter"*
-- *"Logistics startups that recently announced partnerships"*
-
-Results include a synthesized written answer and a structured sidebar of extracted companies with relevance context and source links. One click exports the full report as Markdown.
+Ask a question — the backend freshly chunks the article, retrieves the most relevant passages via semantic search, and streams a cited answer. Citations like `[1]` are clickable and scroll to and highlight the exact passage in the article reader.
 
 ---
 
 ## Architecture
 
 ```
-User Query
+Article Dashboard
     │
-    ├─[1] RAG Retrieval ──── Chroma vector store (news archive + custom docs)
-    │
-    ├─[2] Web Search ──────── Tavily (real-time, advanced depth)
-    │
-    ├─[3] Synthesis ──────── GPT-4o-mini (streams token-by-token to UI)
-    │
-    └─[4] Company Extraction ─ Structured JSON: name, context, source, URL
+    └─ Click article
+           │
+           ├─ Article Reader ── fetches + renders full article HTML (server-side)
+           │
+           └─ Intelligence Chat
+                  │
+                  ├─[1] Fetch article text + chunk into ~500-char passages
+                  │
+                  ├─[2] Embed passages + query (text-embedding-3-small)
+                  │
+                  ├─[3] Retrieve top-k passages by cosine similarity
+                  │
+                  └─[4] GPT-4o-mini streams cited answer ([1], [2], ...)
+                             │
+                             └─ Click citation → highlight passage in reader
 ```
 
-The pipeline is orchestrated with **LangGraph**. Results are streamed over **Server-Sent Events (SSE)** so you see each stage as it happens: *Retrieving → Searching → Analysing → Identifying companies...*
+RSS ingestion and article company tagging run in the background via **APScheduler**. The pipeline is built with **LangGraph** and streams over **Server-Sent Events (SSE)**.
 
 ---
 
@@ -43,24 +46,22 @@ The pipeline is orchestrated with **LangGraph**. Results are streamed over **Ser
 | **LLM** | GPT-4o-mini (OpenAI) |
 | **Embeddings** | text-embedding-3-small (OpenAI) |
 | **Vector Store** | Chroma (persisted) |
-| **Web Search** | Tavily API |
+| **Article Fetching** | httpx + BeautifulSoup4 |
 | **RSS Ingestion** | feedparser + APScheduler (60-min refresh) |
-| **Document Parsing** | pypdf, python-docx, BeautifulSoup4 |
 | **Frontend** | Next.js 14 (App Router), TypeScript |
 | **Streaming** | Server-Sent Events |
-| **Styling** | Plain CSS Modules, dark-only design |
+| **Styling** | Plain CSS Modules, dark-only design system |
 
 ---
 
 ## Features
 
-- **Real-time streaming** — LLM output appears token-by-token; status bar tracks pipeline stage
-- **Multi-session chat** — Open multiple research threads in tabs; sessions persist across browser refresh
-- **Company sidebar** — Extracted companies shown in a structured panel; click any message to view its companies
-- **Report export** — One-click Markdown report with query, answer, and company list
-- **Custom data sources** — Add URLs (RSS feeds or web pages), PDFs, or DOCX files; chunked and embedded into the vector store
-- **Automatic news ingestion** — Boston BIZ Journal, Yahoo Finance, and TechCrunch ingested every 60 minutes on startup
-- **Source management** — View, manage, and delete custom sources with live chunk counts
+- **Article dashboard** — Cards for every ingested TechCrunch article, tagged with the companies mentioned
+- **In-app article reader** — Full article HTML fetched and rendered server-side; no iframes
+- **Article-grounded chat** — Each chat session freshly chunks and embeds the selected article; answers are grounded only in that article's content
+- **Clickable citations** — `[N]` citations scroll to and highlight the exact passage in the live article reader, with cross-node DOM text matching
+- **Real-time streaming** — LLM output streams token-by-token with pipeline status updates
+- **Custom data sources** — Add URLs, PDFs, or DOCX files; chunked and embedded into the vector store
 
 ---
 
@@ -71,7 +72,6 @@ The pipeline is orchestrated with **LangGraph**. Results are streamed over **Ser
 - Python 3.11+
 - Node.js 18+
 - OpenAI API key
-- Tavily API key
 
 ### 1. Clone
 
@@ -93,7 +93,6 @@ Create a `.env` file in `backend/`:
 
 ```env
 OPENAI_API_KEY=sk-...
-TAVILY_API_KEY=tvly-...
 ```
 
 Start the API server:
@@ -102,7 +101,7 @@ Start the API server:
 uvicorn main:app --reload
 ```
 
-The backend runs at `http://localhost:8000`. On first startup, RSS feeds are ingested and the Chroma vector store is populated.
+The backend runs at `http://localhost:8000`. On first startup, TechCrunch articles are ingested and the Chroma vector store is populated.
 
 ### 3. Frontend
 
@@ -120,23 +119,22 @@ Open `http://localhost:3000`. Next.js proxies all `/api/*` requests to the FastA
 
 | Method | Endpoint | Description |
 |---|---|---|
-| `POST` | `/api/chat/stream` | Stream a research query (SSE) |
+| `GET` | `/api/articles` | List all ingested articles with company tags |
+| `POST` | `/api/company/chat` | Stream an article chat session (SSE) |
+| `GET` | `/api/company/article-content` | Fetch and clean article HTML for the reader |
 | `GET` | `/api/sources` | List all custom sources |
-| `POST` | `/api/sources/url` | Add a URL (RSS feed or web page) |
+| `POST` | `/api/sources/url` | Add a URL (web page) |
 | `POST` | `/api/sources/upload` | Upload a PDF or DOCX file (max 20 MB) |
 | `DELETE` | `/api/sources/{id}` | Remove a source and clean vector store |
-| `POST` | `/api/feeds/refresh` | Manually trigger RSS ingestion |
-| `POST` | `/api/reports/export` | Generate and download a Markdown report |
 | `GET` | `/health` | Health check |
 
-### SSE Event Types (`/api/chat/stream`)
+### SSE Event Types (`/api/company/chat`)
 
 ```
-status    → pipeline stage update ("Retrieving...", "Searching...", etc.)
+status    → pipeline stage update ("Chunking article...", "Generating cited answer...", etc.)
 token     → incremental LLM output chunk
-companies → structured array of extracted companies (after synthesis)
+sources   → numbered source chunks used to generate the answer
 done      → stream complete
-error     → error message
 ```
 
 ---
@@ -147,32 +145,30 @@ error     → error message
 bd-agent/
 ├── backend/
 │   ├── agents/
-│   │   ├── graph.py          # LangGraph pipeline definition
-│   │   ├── nodes.py          # RAG, web search, synthesis, extraction nodes
-│   │   └── state.py          # ResearchState TypedDict
+│   │   ├── graph.py              # LangGraph pipeline definition
+│   │   ├── nodes.py              # RAG, synthesis, company extraction nodes
+│   │   └── state.py              # ResearchState TypedDict
 │   ├── api/
-│   │   ├── chat.py           # SSE streaming endpoint
-│   │   ├── feeds.py          # RSS refresh endpoint
-│   │   ├── reports.py        # Report export endpoint
-│   │   └── sources.py        # Source CRUD endpoints
+│   │   ├── articles.py           # Article list endpoint + company tagging
+│   │   ├── company.py            # Article chat, RAG chunking, article reader
+│   │   ├── feeds.py              # RSS refresh endpoint
+│   │   └── sources.py            # Source CRUD endpoints
 │   ├── ingestion/
-│   │   ├── rss_ingester.py   # RSS feed parsing and ingestion
-│   │   ├── source_processor.py # URL / PDF / DOCX processing
-│   │   └── vector_store.py   # Chroma singleton
-│   ├── config.py             # Environment, model, and schedule config
-│   └── main.py               # FastAPI app entry point
+│   │   ├── rss_ingester.py       # RSS feed parsing and full-text ingestion
+│   │   ├── source_processor.py   # URL / PDF / DOCX processing
+│   │   └── vector_store.py       # Chroma singleton
+│   ├── config.py                 # Environment, model, and schedule config
+│   └── main.py                   # FastAPI app entry point
 └── frontend/
     └── src/
         ├── components/
-        │   ├── chat/          # ChatInterface, MessageList, MessageItem
-        │   ├── companies/     # CompaniesPanel, CompanyCard
-        │   ├── feeds/         # FeedsView
-        │   ├── layout/        # AppLayout, Sidebar
-        │   └── sources/       # AddSourceModal
+        │   ├── articles/          # ArticleDashboard, ArticleCard, ArticleDetail, ArticleChat
+        │   ├── layout/            # AppLayout
+        │   └── ui/                # Shared UI components (Spinner, etc.)
         ├── hooks/
-        │   └── useSessions.ts # Session management + SSE client
+        │   └── useCompanyChat.ts  # SSE client for article chat
         └── types/
-            └── index.ts       # Shared TypeScript interfaces
+            └── index.ts           # Shared TypeScript interfaces
 ```
 
 ---
@@ -184,7 +180,6 @@ Edit `backend/config.py` to change:
 - **RSS feeds** — add or remove feed URLs
 - **Refresh interval** — defaults to 60 minutes
 - **Chroma persist directory** — defaults to `./chroma_db`
-- **RAG retrieval count** — defaults to `k=6` documents
 
 ---
 
@@ -193,5 +188,5 @@ Edit `backend/config.py` to change:
 | Data | Storage |
 |---|---|
 | News articles & custom documents | Chroma vector store (`backend/chroma_db/`) |
+| Article company tags (cache) | `backend/article_companies.json` |
 | User-added sources metadata | `backend/user_sources.json` |
-| Chat sessions | Browser localStorage |
