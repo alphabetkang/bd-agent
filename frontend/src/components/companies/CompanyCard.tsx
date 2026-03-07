@@ -5,11 +5,17 @@ import styles from "./CompanyCard.module.css";
 interface CompanyCardProps {
   company: Company;
   index: number;
+  selected?: boolean;
+  onClick?: () => void;
 }
 
-export function CompanyCard({ company, index }: CompanyCardProps) {
+export function CompanyCard({ company, index, selected, onClick }: CompanyCardProps) {
   return (
-    <div className={styles.card} style={{ animationDelay: `${index * 60}ms` }}>
+    <div
+      className={`${styles.card} ${selected ? styles.selected : ""} ${onClick ? styles.clickable : ""}`}
+      style={{ animationDelay: `${index * 60}ms` }}
+      onClick={onClick}
+    >
       <div className={styles.cardHeader}>
         <span className={styles.companyName}>{company.name}</span>
         {company.url && (
@@ -19,6 +25,7 @@ export function CompanyCard({ company, index }: CompanyCardProps) {
             rel="noopener noreferrer"
             className={styles.link}
             title="Open source"
+            onClick={(e) => e.stopPropagation()}
           >
             <ExternalLink size={12} />
           </a>

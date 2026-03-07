@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ChatSession, ChatStatus, Company, Message } from "@/types";
+import { ChatSession, ChatStatus, Company, Message, SourceDoc } from "@/types";
 
 let _counter = 0;
 const uid = () => `msg_${++_counter}_${Date.now()}`;
@@ -184,6 +184,23 @@ export function useSessions() {
                           ...s,
                           messages: s.messages.map((m) =>
                             m.id !== asstMsgId ? m : { ...m, companies }
+                          ),
+                        }
+                  )
+                );
+                break;
+              }
+              case "sources": {
+                const sources: SourceDoc[] =
+                  typeof content === "object" ? (content as { sources?: SourceDoc[] }).sources ?? [] : [];
+                setSessions((prev) =>
+                  prev.map((s) =>
+                    s.id !== currentId
+                      ? s
+                      : {
+                          ...s,
+                          messages: s.messages.map((m) =>
+                            m.id !== asstMsgId ? m : { ...m, sources }
                           ),
                         }
                   )

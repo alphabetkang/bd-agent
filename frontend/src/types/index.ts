@@ -5,6 +5,14 @@ export interface Company {
   url: string;
 }
 
+export interface SourceDoc {
+  id: string;
+  title: string;
+  url: string;
+  source: string;
+  text: string;
+}
+
 export type MessageRole = "user" | "assistant";
 
 export interface Message {
@@ -12,6 +20,7 @@ export interface Message {
   role: MessageRole;
   content: string;
   companies?: Company[];
+  sources?: SourceDoc[];
   isStreaming?: boolean;
   isNotification?: boolean;
 }

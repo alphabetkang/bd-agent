@@ -34,19 +34,30 @@ def rag_retrieval_node(state: ResearchState) -> dict:
     docs = retriever.invoke(state["query"])
 
     if not docs:
-        return {"rag_context": "No relevant articles found in the news archive."}
+        return {
+            "rag_context": "No relevant articles found in the news archive.",
+            "source_docs": [],
+        }
 
     passages = []
-    for doc in docs:
+    source_docs = []
+    for i, doc in enumerate(docs):
         source = doc.metadata.get("source", "Unknown")
         title = doc.metadata.get("title", "")
         url = doc.metadata.get("url", "")
         text = doc.page_content[:800]
         passages.append(f"[{source}] {title}\nURL: {url}\n{text}")
+        source_docs.append({
+            "id": str(i + 1),
+            "title": title,
+            "url": url,
+            "source": source,
+            "text": doc.page_content,
+        })
 
     context = "\n\n---\n\n".join(passages)
     logger.info("RAG retrieved %d documents", len(docs))
-    return {"rag_context": context}
+    return {"rag_context": context, "source_docs": source_docs}
 
 
 # ---------------------------------------------------------------------------
@@ -63,16 +74,26 @@ def web_search_node(state: ResearchState) -> dict:
             max_results=5,
         )
         passages = []
-        for r in results.get("results", []):
-            passages.append(
-                f"[{r.get('title', '')}]\nURL: {r.get('url', '')}\n{r.get('content', '')[:600]}"
-            )
+        web_source_docs = []
+        rag_count = len(state.get("source_docs", []))
+        for i, r in enumerate(results.get("results", [])):
+            title = r.get("title", "")
+            url = r.get("url", "")
+            content = r.get("content", "")
+            passages.append(f"[{title}]\nURL: {url}\n{content[:600]}")
+            web_source_docs.append({
+                "id": str(rag_count + i + 1),
+                "title": title,
+                "url": url,
+                "source": "Web Search",
+                "text": content,
+            })
         context = "\n\n---\n\n".join(passages)
         logger.info("Tavily returned %d results", len(passages))
-        return {"web_context": context}
+        return {"web_context": context, "web_source_docs": web_source_docs}
     except Exception as exc:
         logger.error("Tavily search failed: %s", exc)
-        return {"web_context": "Web search unavailable."}
+        return {"web_context": "Web search unavailable.", "web_source_docs": []}
 
 
 # ---------------------------------------------------------------------------

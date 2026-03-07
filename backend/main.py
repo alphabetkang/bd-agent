@@ -6,6 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from api.chat import router as chat_router
+from api.company import router as company_router
 from api.feeds import router as feeds_router
 from api.reports import router as reports_router
 from api.sources import router as sources_router
@@ -29,6 +30,7 @@ app.add_middleware(
 )
 
 app.include_router(chat_router, prefix="/api")
+app.include_router(company_router, prefix="/api")
 app.include_router(feeds_router, prefix="/api")
 app.include_router(reports_router, prefix="/api")
 app.include_router(sources_router, prefix="/api")

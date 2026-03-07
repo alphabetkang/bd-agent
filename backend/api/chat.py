@@ -35,7 +35,9 @@ async def _stream_research(query: str) -> AsyncGenerator[str, None]:
         "query": query,
         "messages": [],
         "rag_context": "",
+        "source_docs": [],
         "web_context": "",
+        "web_source_docs": [],
         "final_answer": "",
         "companies": [],
     }
@@ -69,9 +71,12 @@ async def _stream_research(query: str) -> AsyncGenerator[str, None]:
         elif kind == "on_chain_end" and name == "LangGraph":
             final_state = event["data"].get("output")
 
-    # Send companies after the stream completes
+    # Send companies and all source docs (RAG + web) after the stream completes
     if final_state and final_state.get("companies"):
         yield _sse("companies", {"companies": final_state["companies"]})
+    all_sources = (final_state or {}).get("source_docs", []) + (final_state or {}).get("web_source_docs", [])
+    if all_sources:
+        yield _sse("sources", {"sources": all_sources})
 
     yield _sse("done", {"message": "Complete"})
 

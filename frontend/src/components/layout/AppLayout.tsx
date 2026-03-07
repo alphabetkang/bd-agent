@@ -1,14 +1,16 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Sidebar } from "./Sidebar";
 import { ChatInterface } from "@/components/chat/ChatInterface";
 import { CompaniesPanel } from "@/components/companies/CompaniesPanel";
+import { CompanyChat } from "@/components/companies/CompanyChat";
+import { ArticleViewer } from "@/components/companies/ArticleViewer";
 import { FeedsView } from "@/components/feeds/FeedsView";
 import { AddSourceModal } from "@/components/sources/AddSourceModal";
 import { useSessions } from "@/hooks/useSessions";
 import { fetchSources } from "@/lib/api";
-import { UserSource } from "@/types";
+import { Company, SourceDoc, UserSource } from "@/types";
 import styles from "./AppLayout.module.css";
 
 export function AppLayout() {
@@ -17,6 +19,12 @@ export function AppLayout() {
   const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null);
   const [sourceModalOpen, setSourceModalOpen] = useState(false);
   const [userSources, setUserSources] = useState<UserSource[]>([]);
+
+  // Company research state
+  const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
+  const [companyChatSources, setCompanyChatSources] = useState<SourceDoc[]>([]);
+  const [activeCitationId, setActiveCitationId] = useState<string | null>(null);
+  const [selectedArticleSource, setSelectedArticleSource] = useState<SourceDoc | null>(null);
 
   const {
     sessions,
@@ -41,7 +49,10 @@ export function AppLayout() {
   // Auto-select the latest completed message with companies when streaming finishes
   const prevStatusRef = useRef(status);
   useEffect(() => {
-    const wasStreaming = prevStatusRef.current !== "idle" && prevStatusRef.current !== "done" && prevStatusRef.current !== "error";
+    const wasStreaming =
+      prevStatusRef.current !== "idle" &&
+      prevStatusRef.current !== "done" &&
+      prevStatusRef.current !== "error";
     prevStatusRef.current = status;
     if (wasStreaming && status === "done") {
       const msgs = activeSession?.messages ?? [];
@@ -53,6 +64,13 @@ export function AppLayout() {
       }
     }
   }, [status, activeSession?.messages]);
+
+  const handleSelectCompany = useCallback((company: Company | null) => {
+    setSelectedCompany(company);
+    setActiveCitationId(null);
+    setCompanyChatSources([]);
+    setSelectedArticleSource(null);
+  }, []);
 
   function handleSelectSession(id: string) {
     setActiveId(id);
@@ -66,15 +84,18 @@ export function AppLayout() {
 
   function handleSourceAdded(source: UserSource) {
     setUserSources((prev) => [...prev, source]);
-
     const typeLabel =
-      source.type === "pdf" ? "PDF"
-      : source.type === "docx" ? "DOCX"
-      : source.type === "url" ? "feed/page"
-      : "file";
-
+      source.type === "pdf"
+        ? "PDF"
+        : source.type === "docx"
+        ? "DOCX"
+        : source.type === "url"
+        ? "feed/page"
+        : "file";
     addNotification(
-      `Source connected — **${source.name}** (${typeLabel}) · ${source.chunk_count} chunk${source.chunk_count !== 1 ? "s" : ""} ingested into the knowledge base.`
+      `Source connected — **${source.name}** (${typeLabel}) · ${source.chunk_count} chunk${
+        source.chunk_count !== 1 ? "s" : ""
+      } ingested into the knowledge base.`
     );
   }
 
@@ -105,6 +126,13 @@ export function AppLayout() {
 
   const isStreaming = status !== "idle" && status !== "done" && status !== "error";
 
+  // Sources for the article viewer: prefer sources from the most recent company chat query,
+  // falling back to the original RAG sources that identified the company.
+  const articleSources =
+    companyChatSources.length > 0
+      ? companyChatSources
+      : (displayMessage?.sources ?? []);
+
   return (
     <div className={styles.appLayout}>
       <Sidebar
@@ -116,8 +144,41 @@ export function AppLayout() {
         userSources={userSources}
       />
 
-      <main className={styles.main}>
-        {activeView === "chat" ? (
+      {/* Companies panel — center-left, expands when no company selected */}
+      <div className={selectedCompany ? styles.companiesCompact : styles.companiesMain}>
+        <CompaniesPanel
+          selectedMessage={displayMessage}
+          latestQuery={latestQuery}
+          isLoading={isStreaming}
+          selectedCompany={selectedCompany}
+          onSelectCompany={handleSelectCompany}
+        />
+      </div>
+
+      {/* Article viewer — appears between companies and chat when company is selected */}
+      {selectedCompany && (
+        <div className={styles.articleArea}>
+          <ArticleViewer
+            sources={articleSources}
+            activeCitationId={activeCitationId}
+            selectedSourceId={selectedArticleSource?.id ?? null}
+            onSelectSource={setSelectedArticleSource}
+          />
+        </div>
+      )}
+
+      {/* Right panel: company-focused chat or general intelligence chat */}
+      <div className={styles.rightPanel}>
+        {selectedCompany ? (
+          <CompanyChat
+            company={selectedCompany}
+            selectedArticle={selectedArticleSource}
+            onCitationClick={setActiveCitationId}
+            onSourcesUpdate={setCompanyChatSources}
+            onClearArticle={() => setSelectedArticleSource(null)}
+            onClose={() => handleSelectCompany(null)}
+          />
+        ) : activeView === "chat" ? (
           <ChatInterface
             sessions={sessions}
             activeId={activeId}
@@ -134,13 +195,7 @@ export function AppLayout() {
         ) : (
           <FeedsView userSources={userSources} />
         )}
-      </main>
-
-      <CompaniesPanel
-        selectedMessage={displayMessage}
-        latestQuery={latestQuery}
-        isLoading={isStreaming}
-      />
+      </div>
 
       {sourceModalOpen && (
         <AddSourceModal

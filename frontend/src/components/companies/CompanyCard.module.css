@@ -7,10 +7,25 @@
   animation: fadeIn 0.3s ease both;
 }
 
-.card:hover {
+.clickable {
+  cursor: pointer;
+}
+
+.clickable:hover {
   border-color: var(--border-light);
   transform: translateY(-1px);
   box-shadow: 0 4px 12px var(--shadow);
+}
+
+.selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(255, 186, 40, 0.2);
+  background: rgba(255, 186, 40, 0.04);
+}
+
+.selected:hover {
+  border-color: var(--accent);
+  transform: none;
 }
 
 .cardHeader {

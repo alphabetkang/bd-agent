@@ -5,10 +5,43 @@
   background: var(--bg-main);
 }
 
-.main {
+/* Companies panel — full center when no company selected */
+.companiesMain {
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
+  border-right: 1px solid var(--border);
+  overflow: hidden;
+}
+
+/* Companies panel — narrow column when company is selected */
+.companiesCompact {
+  width: 300px;
+  min-width: 300px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--border);
+  overflow: hidden;
+}
+
+/* Article viewer — takes all remaining center space */
+.articleArea {
+  flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--border);
+  overflow: hidden;
+}
+
+/* Right panel — Intelligence Chat or Company Chat */
+.rightPanel {
+  width: 460px;
+  min-width: 460px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
 }

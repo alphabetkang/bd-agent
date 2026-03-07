@@ -12,9 +12,17 @@ interface CompaniesPanelProps {
   selectedMessage: Message | null;
   latestQuery: string;
   isLoading: boolean;
+  selectedCompany: Company | null;
+  onSelectCompany: (company: Company | null) => void;
 }
 
-export function CompaniesPanel({ selectedMessage, latestQuery, isLoading }: CompaniesPanelProps) {
+export function CompaniesPanel({
+  selectedMessage,
+  latestQuery,
+  isLoading,
+  selectedCompany,
+  onSelectCompany,
+}: CompaniesPanelProps) {
   const [exporting, setExporting] = useState(false);
 
   const companies: Company[] = selectedMessage?.companies ?? [];
@@ -30,6 +38,10 @@ export function CompaniesPanel({ selectedMessage, latestQuery, isLoading }: Comp
     } finally {
       setExporting(false);
     }
+  }
+
+  function handleCardClick(company: Company) {
+    onSelectCompany(selectedCompany?.name === company.name ? null : company);
   }
 
   return (
@@ -51,7 +63,7 @@ export function CompaniesPanel({ selectedMessage, latestQuery, isLoading }: Comp
             title="Export report"
           >
             {exporting ? <Spinner size={12} /> : <Download size={12} />}
-            <span>{exporting ? "Exporting..." : "Export Report"}</span>
+            <span>{exporting ? "Exporting..." : "Export"}</span>
           </button>
         )}
       </div>
@@ -72,11 +84,25 @@ export function CompaniesPanel({ selectedMessage, latestQuery, isLoading }: Comp
             </p>
           </div>
         ) : (
-          <div className={styles.companyList}>
-            {companies.map((company, i) => (
-              <CompanyCard key={company.name} company={company} index={i} />
-            ))}
-          </div>
+          <>
+            {selectedCompany && (
+              <p className={styles.selectHint}>Click a card to open its sources and start a focused chat.</p>
+            )}
+            {!selectedCompany && (
+              <p className={styles.selectHint}>Click a card to research a company in depth.</p>
+            )}
+            <div className={styles.companyList}>
+              {companies.map((company, i) => (
+                <CompanyCard
+                  key={company.name}
+                  company={company}
+                  index={i}
+                  selected={selectedCompany?.name === company.name}
+                  onClick={() => handleCardClick(company)}
+                />
+              ))}
+            </div>
+          </>
         )}
       </div>
     </aside>

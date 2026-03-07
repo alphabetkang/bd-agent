@@ -12,6 +12,14 @@ class CompanyResult(TypedDict):
     url: str
 
 
+class SourceDoc(TypedDict):
+    id: str
+    title: str
+    url: str
+    source: str
+    text: str
+
+
 class ResearchState(TypedDict):
     # The user's original query
     query: str
@@ -19,8 +27,12 @@ class ResearchState(TypedDict):
     messages: Annotated[Sequence[BaseMessage], add_messages]
     # Raw retrieved passages from the vector store
     rag_context: str
+    # Structured source docs returned from RAG (for the article viewer)
+    source_docs: list[SourceDoc]
     # Raw results from Tavily web search
     web_context: str
+    # Structured source docs from Tavily web search (for the article viewer)
+    web_source_docs: list[SourceDoc]
     # Final synthesised answer text
     final_answer: str
     # Extracted companies with their relevance context

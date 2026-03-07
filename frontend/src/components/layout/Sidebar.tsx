@@ -5,8 +5,8 @@ import { UserSource } from "@/types";
 import styles from "./Sidebar.module.css";
 
 const FEEDS = [
-  { name: "Boston BIZ Journal", active: true },
-  { name: "Yahoo Finance", active: true },
+  // { name: "Boston BIZ Journal", active: true },
+  // { name: "Yahoo Finance", active: true },
   { name: "TechCrunch", active: true },
 ];
 
