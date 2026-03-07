@@ -5,6 +5,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from api.articles import router as articles_router
 from api.chat import router as chat_router
 from api.company import router as company_router
 from api.feeds import router as feeds_router
@@ -29,6 +30,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(articles_router, prefix="/api")
 app.include_router(chat_router, prefix="/api")
 app.include_router(company_router, prefix="/api")
 app.include_router(feeds_router, prefix="/api")

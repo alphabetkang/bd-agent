@@ -1,4 +1,4 @@
-import { Company, UserSource } from "@/types";
+import { Article, Company, UserSource } from "@/types";
 
 const API_BASE = "/api";
 
@@ -24,6 +24,12 @@ export async function exportReport(
   a.download = match ? match[1] : "report.md";
   a.click();
   URL.revokeObjectURL(url);
+}
+
+export async function fetchArticles(): Promise<Article[]> {
+  const res = await fetch(`${API_BASE}/articles`);
+  if (!res.ok) throw new Error("Failed to load articles");
+  return res.json();
 }
 
 export async function fetchSources(): Promise<UserSource[]> {

@@ -77,6 +77,16 @@ pre {
   overflow-x: auto;
 }
 
+/* Citation highlight (DOM-injected via Range API, not in React tree) */
+mark.citation-hl {
+  background: rgba(255, 186, 40, 0.35);
+  color: inherit;
+  border-radius: 2px;
+  padding: 1px 0;
+  outline: 2px solid rgba(255, 186, 40, 0.6);
+  outline-offset: 1px;
+}
+
 /* Animations */
 @keyframes spin {
   to { transform: rotate(360deg); }

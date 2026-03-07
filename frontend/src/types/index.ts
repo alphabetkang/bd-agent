@@ -39,6 +39,15 @@ export interface SSEEvent {
   content: string | { message?: string; text?: string; companies?: Company[] };
 }
 
+export interface Article {
+  url: string;
+  title: string;
+  published: string;
+  source: string;
+  snippet: string;
+  companies: string[];
+}
+
 export interface UserSource {
   id: string;
   name: string;

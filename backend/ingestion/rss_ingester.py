@@ -16,9 +16,9 @@ logger = logging.getLogger(__name__)
 
 _splitter = RecursiveCharacterTextSplitter(chunk_size=800, chunk_overlap=80)
 
-# If the RSS body is shorter than this we assume it's a summary and try to
-# fetch the full article text from the article URL.
-_SUMMARY_THRESHOLD = 500
+# Always fetch the full article — RSS feeds like TechCrunch only provide
+# short excerpts regardless of length, so we unconditionally scrape the URL.
+_SUMMARY_THRESHOLD = float("inf")
 
 
 def _fetch_feed_content(url: str) -> bytes:
