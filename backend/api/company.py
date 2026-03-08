@@ -201,6 +201,40 @@ Answer with inline citations:""",
 
 
 # ---------------------------------------------------------------------------
+# Article RAG (non-streaming, for evaluation)
+# ---------------------------------------------------------------------------
+
+async def run_article_rag(article_url: str, query: str, k: int = 8) -> tuple[str, str]:
+    """
+    Run article RAG for a single query: fetch/chunk article, retrieve top-k passages,
+    generate answer. Returns (response_text, retrieved_context_str) for use in RAGAS etc.
+    """
+    chunks = await _rag_article_chunks(article_url, query, k=k)
+    if not chunks:
+        return "", ""
+
+    sources_text = "\n\n".join(f"[{c['id']}] {c['text']}" for c in chunks)
+    context_str = "\n\n".join(c["text"] for c in chunks)
+
+    llm = ChatOpenAI(
+        model=settings.openai_model,
+        api_key=settings.openai_api_key,
+        streaming=False,
+        temperature=0,
+    )
+    chain = ARTICLE_CHAT_PROMPT | llm
+    response = await chain.ainvoke(
+        {
+            "title": chunks[0]["title"],
+            "sources_text": sources_text,
+            "query": query,
+        }
+    )
+    answer = response.content if hasattr(response, "content") else str(response)
+    return answer, context_str
+
+
+# ---------------------------------------------------------------------------
 # Streaming chat
 # ---------------------------------------------------------------------------
 

@@ -1,239 +1,90 @@
-"""
-RAGAS Pipeline Evaluation for BD Agent.
-
-Runs the research pipeline on certification evaluation questions, then scores
-the RAG output using RAGAS metrics: Faithfulness, Response Relevance,
-Context Precision, and Context Recall.
-
-Usage (from backend/ directory):
-    python -m evaluation.ragas_eval
-
-Requires: OPENAI_API_KEY, TAVILY_API_KEY in .env
-Ensure RSS feeds are ingested first (start the server once to populate Chroma).
-"""
-
 import asyncio
-import json
-import os
+import re
 import sys
 from pathlib import Path
 
-# Ensure backend is on path when run as module
+# Allow importing backend modules (e.g. config) when run as script
 _backend = Path(__file__).resolve().parent.parent
 if str(_backend) not in sys.path:
     sys.path.insert(0, str(_backend))
 
-os.chdir(_backend)
+from langchain_community.document_loaders import TextLoader
+from ragas.llms import LangchainLLMWrapper
+from ragas.embeddings import LangchainEmbeddingsWrapper
+from ragas.testset.graph import KnowledgeGraph
+from ragas.testset.graph import Node, NodeType
+from ragas.testset.transforms import default_transforms, apply_transforms
+from ragas.testset import TestsetGenerator 
+from ragas.testset.synthesizers import SingleHopSpecificQuerySynthesizer
 
-# Load .env before importing app modules
-from dotenv import load_dotenv
-load_dotenv(_backend / ".env")
+from langchain_openai import ChatOpenAI
+from langchain_openai import OpenAIEmbeddings
 
-from ragas import EvaluationDataset, SingleTurnSample, evaluate
+from config import settings
 
-from agents.graph import research_graph
-from agents.state import ResearchState
+from api.company import run_article_rag
 
-# Evaluation questions from CERTIFICATION.md
-EVAL_QUESTIONS = [
-    {
-        "question": "What are some tech companies in LA that need space?",
-        "expected_answer": "Here are 5 tech companies likely to need space in the next 12 months",
-    },
-    {
-        "question": "Is there current news on biotech funding in Boston?",
-        "expected_answer": "No, biotech funding news has been sparse for the past 6 months",
-    },
-    {
-        "question": "What oil & gas companies require office space in the next 6 months and make over $5M ARR?",
-        "expected_answer": "Here is a list of companies that meet your requirements",
-    },
-]
+loader = TextLoader("backend/evaluation/test_article.txt")
+docs = loader.load()
+print(f"Loaded {len(docs)} documents")
 
+# 
+generator_llm = LangchainLLMWrapper(ChatOpenAI(api_key=settings.openai_api_key, model="gpt-4o-mini"))
+generator_embeddings = LangchainEmbeddingsWrapper(OpenAIEmbeddings(api_key=settings.openai_api_key))
 
-def _split_context(context: str) -> list[str]:
-    """Split combined context string into list of passages for RAGAS."""
-    if not context or context.strip() == "":
-        return []
-    return [p.strip() for p in context.split("\n\n---\n\n") if p.strip()]
+kg = KnowledgeGraph()
+kg
 
-
-def _combine_contexts(rag_context: str, web_context: str) -> list[str]:
-    """Combine RAG and web contexts into a single list of passages."""
-    rag_passages = _split_context(rag_context)
-    web_passages = _split_context(web_context)
-    return rag_passages + web_passages
-
-
-async def run_pipeline(query: str) -> ResearchState:
-    """Run the research graph and return final state."""
-    initial_state: ResearchState = {
-        "query": query,
-        "messages": [],
-        "rag_context": "",
-        "web_context": "",
-        "final_answer": "",
-        "companies": [],
-    }
-    final_state = await research_graph.ainvoke(initial_state)
-    return final_state
-
-
-async def collect_eval_data() -> list[dict]:
-    """Run the pipeline for each eval question and collect (query, contexts, answer)."""
-    results = []
-    for i, item in enumerate(EVAL_QUESTIONS):
-        q = item["question"]
-        print(f"[{i + 1}/{len(EVAL_QUESTIONS)}] Running pipeline: {q[:60]}...")
-        try:
-            state = await run_pipeline(q)
-            contexts = _combine_contexts(
-                state.get("rag_context", ""),
-                state.get("web_context", ""),
-            )
-            results.append(
-                {
-                    "question": q,
-                    "expected_answer": item["expected_answer"],
-                    "answer": state.get("final_answer", ""),
-                    "contexts": contexts,
-                }
-            )
-        except Exception as e:
-            print(f"  ERROR: {e}")
-            results.append(
-                {
-                    "question": q,
-                    "expected_answer": item["expected_answer"],
-                    "answer": "",
-                    "contexts": [],
-                }
-            )
-    return results
-
-
-def build_dataset(data: list[dict]) -> EvaluationDataset:
-    """Build RAGAS EvaluationDataset from pipeline outputs."""
-    samples = []
-    for row in data:
-        contexts = row["contexts"]
-        if not contexts:
-            contexts = ["No relevant context retrieved."]
-        sample = SingleTurnSample(
-            user_input=row["question"],
-            retrieved_contexts=contexts,
-            response=row["answer"] or "",
-            reference=row["expected_answer"],
+for doc in docs: 
+    kg.nodes.append(
+        Node(
+            type=NodeType.DOCUMENT,
+            properties={"page_content": doc.page_content, "metadata": doc.metadata}
         )
-        samples.append(sample)
-    return EvaluationDataset(samples=samples)
-
-
-def run_ragas(dataset: EvaluationDataset) -> dict:
-    """Run RAGAS evaluation and return metric scores.
-
-    Uses default RAGAS metrics: faithfulness, answer_relevancy,
-    context_precision, context_recall.
-    """
-    result = evaluate(dataset)
-    # result is EvaluationResult; scores is list of dicts, one per row
-    scores = result.scores
-    if not scores:
-        return {}
-    # Aggregate to mean per metric (exclude None and NaN)
-    metric_keys = ["faithfulness", "answer_relevancy", "context_precision", "context_recall"]
-    agg = {}
-    for key in metric_keys:
-        values = []
-        for s in scores:
-            v = s.get(key)
-            if v is not None and (not isinstance(v, float) or v == v):  # v==v excludes nan
-                values.append(v)
-        agg[key] = sum(values) / len(values) if values else None
-    return agg
-
-
-def format_scores(scores: dict) -> str:
-    """Format scores for CERTIFICATION.md table (e.g. 0.85 or —)."""
-    def fmt(v):
-        if v is None or (isinstance(v, float) and str(v) == "nan"):
-            return "—"
-        return f"{v:.2f}"
-    return {k: fmt(v) for k, v in scores.items()}
-
-
-METRIC_DISPLAY = [
-    ("faithfulness", "Faithfulness"),
-    ("answer_relevancy", "Response Relevance"),
-    ("context_precision", "Context Precision"),
-    ("context_recall", "Context Recall"),
-]
-
-
-def update_certification_md(formatted: dict, cert_path: Path) -> None:
-    """Update CERTIFICATION.md with RAGAS results."""
-    content = cert_path.read_text()
-    # Replace the baseline table (first occurrence of the RAGAS Pipeline Evaluation table)
-    old_table = """| Metric             | Score |
-| ------------------ | ----- |
-| Faithfulness       | —     |
-| Response Relevance | —     |
-| Context Precision  | —     |
-| Context Recall     | —     |"""
-    new_table = "| Metric             | Score |\n| ------------------ | ----- |\n"
-    for name, display in METRIC_DISPLAY:
-        new_table += f"| {display:<19} | {formatted.get(name, '—'):>5} |\n"
-    new_table = new_table.rstrip()
-    if old_table in content:
-        content = content.replace(old_table, new_table)
-        content = content.replace(
-            "> **TODO:** Run RAGAS evaluation and populate results.",
-            "> Run `python -m evaluation.ragas_eval` from `backend/` to re-run evaluation.",
-        )
-        cert_path.write_text(content)
-        print(f"\nUpdated {cert_path}")
-    else:
-        print("\nCould not find table in CERTIFICATION.md to update.")
-
-
-def main():
-    import argparse
-    parser = argparse.ArgumentParser(description="RAGAS pipeline evaluation for BD Agent")
-    parser.add_argument(
-        "--update-cert",
-        action="store_true",
-        help="Update CERTIFICATION.md with results",
     )
-    args = parser.parse_args()
 
-    print("BD Agent — RAGAS Pipeline Evaluation")
-    print("=" * 50)
-    print("Phase 1: Running pipeline on evaluation questions...")
-    data = asyncio.run(collect_eval_data())
-    print("\nPhase 2: Building RAGAS dataset...")
-    dataset = build_dataset(data)
-    print(f"  Samples: {len(dataset)}")
-    print("\nPhase 3: Running RAGAS metrics (this may take a few minutes)...")
-    scores = run_ragas(dataset)
-    formatted = format_scores(scores)
-    print("\n" + "=" * 50)
-    print("Results (mean scores):")
-    print(json.dumps(formatted, indent=2))
-    print("\nCERTIFICATION.md format:")
-    print("| Metric             | Score |")
-    print("| ------------------ | ----- |")
-    for name, display in METRIC_DISPLAY:
-        print(f"| {display:<19} | {formatted.get(name, '—'):>5} |")
+transformer_llm = generator_llm
+embedding_model = generator_embeddings
 
-    if args.update_cert:
-        cert_path = _backend.parent / "CERTIFICATION.md"
-        if cert_path.exists():
-            update_certification_md(formatted, cert_path)
-        else:
-            print(f"\nCERTIFICATION.md not found at {cert_path}")
+default_transforms = default_transforms(documents=docs, llm=transformer_llm, embedding_model=embedding_model)
+apply_transforms(kg, default_transforms)
+kg
 
-    return formatted
+kg.save("usecase_data_kg.json")
+usecase_data_kg = KnowledgeGraph.load("usecase_data_kg.json")
+usecase_data_kg
+
+generator = TestsetGenerator(llm=generator_llm, embedding_model=embedding_model, knowledge_graph=usecase_data_kg)
+
+# Single-hop only; multi-hop synthesizers need clusters in the knowledge graph (multiple related nodes).
+query_distribution = [
+    (SingleHopSpecificQuerySynthesizer(llm=generator_llm), 1.0),
+]
+
+testset = generator.generate(testset_size = 20, query_distribution=query_distribution)
+
+# Article URL for article RAG eval (must match test_article.txt content; e.g. TechCrunch)
+ARTICLE_EVAL_URL = "https://techcrunch.com/2026/03/06/bill-gates-terrapower-gets-approval-to-build-new-nuclear-reactor/"
 
 
-if __name__ == "__main__":
-    main()
+def _extract_url_from_doc(doc) -> str | None:
+    """Extract first https URL from document content if present."""
+    if not doc or not doc.page_content:
+        return None
+    m = re.search(r"https://[^\s]+", doc.page_content)
+    return m.group(0).rstrip("/)") if m else None
+
+
+# Run evaluation: article RAG (fetch URL, chunk, embed, top-k, LLM) — same path as company.py article-focused chat
+_url = _extract_url_from_doc(docs[0] if docs else None) or ARTICLE_EVAL_URL
+print(f"Article RAG eval (url={_url})")
+
+
+async def _run_article_eval():
+    for test_row in testset:
+        answer, context = await run_article_rag(_url, test_row.eval_sample.user_input)
+        test_row.eval_sample.response = answer
+        test_row.eval_sample.retrieved_contexts = context
+
+
+asyncio.run(_run_article_eval())
