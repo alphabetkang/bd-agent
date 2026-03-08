@@ -84,17 +84,39 @@ export function ArticleDashboard({ onSelectArticle }: ArticleDashboardProps) {
           </div>
         )}
 
-        {!loading && !error && articles.length > 0 && (
-          <div className={styles.grid}>
-            {articles.map((article) => (
-              <ArticleCard
-                key={article.url}
-                article={article}
-                onClick={() => onSelectArticle(article)}
-              />
-            ))}
-          </div>
-        )}
+        {!loading && !error && articles.length > 0 && (() => {
+          const pinned = articles.filter((a) => a.pinned);
+          const feed = articles.filter((a) => !a.pinned);
+          return (
+            <>
+              {pinned.length > 0 && (
+                <div className={styles.pinnedSection}>
+                  <span className={styles.sectionLabel}>Pinned for Evaluation</span>
+                  <div className={styles.grid}>
+                    {pinned.map((article) => (
+                      <ArticleCard
+                        key={article.url}
+                        article={article}
+                        onClick={() => onSelectArticle(article)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+              {feed.length > 0 && (
+                <div className={styles.grid}>
+                  {feed.map((article) => (
+                    <ArticleCard
+                      key={article.url}
+                      article={article}
+                      onClick={() => onSelectArticle(article)}
+                    />
+                  ))}
+                </div>
+              )}
+            </>
+          );
+        })()}
       </div>
     </div>
   );

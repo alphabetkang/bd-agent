@@ -61,18 +61,20 @@ Over time, this could evolve into a more flexible platform beyond CRE. It could 
 ## Data Sources and External APIs
 
 
-| Source                    | Type           | Purpose                                                                             |
-| ------------------------- | -------------- | ----------------------------------------------------------------------------------- |
-| TechCrunch                | RSS feed       | Tech industry news and funding announcements                                        |
+| Source     | Type     | Purpose                                      |
+| ---------- | -------- | -------------------------------------------- |
+| TechCrunch | RSS feed | Tech industry news and funding announcements |
+
 
 ### Future Implementations:
+
 
 | Source                    | Type           | Purpose                                                                             |
 | ------------------------- | -------------- | ----------------------------------------------------------------------------------- |
 | Boston Business Journal   | RSS feed       | Local Boston-area business news                                                     |
 | Yahoo Finance             | RSS feed       | Broader financial and market news                                                   |
 | Tavily                    | Web Search API | Live web search for queries that need fresher context                               |
-| User-uploaded PDFs / DOCX | File upload    | Additional context ingested into the vector database via the same chunking pipeline  |
+| User-uploaded PDFs / DOCX | File upload    | Additional context ingested into the vector database via the same chunking pipeline |
 
 
 ---

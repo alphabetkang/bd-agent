@@ -96,6 +96,20 @@
   margin-bottom: 20px;
 }
 
+.pinnedSection {
+  margin-bottom: 32px;
+}
+
+.sectionLabel {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--accent);
+  margin-bottom: 12px;
+}
+
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));

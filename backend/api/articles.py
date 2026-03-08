@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/articles", tags=["articles"])
 
 COMPANY_CACHE_FILE = Path(__file__).parent.parent / "article_companies.json"
+PINNED_ARTICLE_FILE = Path(__file__).parent.parent.parent / "evaluation" / "pinned_article.json"
 
 
 def _load_cache() -> dict:
@@ -109,4 +110,15 @@ async def list_articles():
 
     articles = list(seen.values())
     articles.sort(key=lambda a: a["published"], reverse=True)
+
+    # Prepend the pinned evaluation article if it exists
+    if PINNED_ARTICLE_FILE.exists():
+        try:
+            pinned = json.loads(PINNED_ARTICLE_FILE.read_text())
+            # Remove it from the regular list if it was ingested (avoid duplicate)
+            articles = [a for a in articles if a["url"] != pinned.get("url")]
+            articles.insert(0, pinned)
+        except Exception as e:
+            logger.warning("Could not load pinned article: %s", e)
+
     return articles

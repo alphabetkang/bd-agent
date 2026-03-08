@@ -46,6 +46,7 @@ export interface Article {
   source: string;
   snippet: string;
   companies: string[];
+  pinned?: boolean;
 }
 
 export interface UserSource {
