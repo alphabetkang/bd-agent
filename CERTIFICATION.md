@@ -94,6 +94,12 @@ Deployed locally at `http://localhost:3000`. See `README.md` for setup instructi
 ## RAGAS Pipeline Evaluation
 
 
+
+The evaluation was performed using the test article from TechCrunch. This is because this platform currently dynamically loads news articles that are live on the TechCrunch website. For reproducibility purposes, a test news article is provided at 
+
+
+
+
 | Metric             | Score |
 | ------------------ | ----- |
 | Faithfulness       | —     |
