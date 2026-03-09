@@ -150,7 +150,7 @@ Yes — the dense vector retrieval approach will be retained for Demo Day, augme
 
 ## Deliverables
 
-- 5-minute Loom demo video
+- [5-minute Loom demo video](https://www.loom.com/share/ba9fbd434375427ca80c0f3adae8b6f6)
 - Written document addressing each question (this file)
 - All relevant code (see `backend/` and `frontend/`)
 

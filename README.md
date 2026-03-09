@@ -65,6 +65,12 @@ RSS ingestion and article company tagging run in the background via **APSchedule
 
 ---
 
+## Demo
+
+[Watch the Loom walkthrough](https://www.loom.com/share/ba9fbd434375427ca80c0f3adae8b6f6)
+
+---
+
 ## Getting Started
 
 ### Prerequisites
