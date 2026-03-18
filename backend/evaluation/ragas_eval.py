@@ -1,7 +1,14 @@
+import argparse
 import asyncio
 import re
 import sys
 from pathlib import Path
+
+# Parse --update-cert before heavy imports
+_parser = argparse.ArgumentParser()
+_parser.add_argument("--update-cert", action="store_true", help="Update CERTIFICATION.md with RAGAS scores")
+_args, _ = _parser.parse_known_args()
+UPDATE_CERT = _args.update_cert
 
 # Allow importing backend modules (e.g. config) when run as script
 _backend = Path(__file__).resolve().parent.parent
@@ -20,11 +27,14 @@ from ragas.testset.synthesizers import SingleHopSpecificQuerySynthesizer
 from langchain_openai import ChatOpenAI
 from langchain_openai import OpenAIEmbeddings
 
+from ragas import evaluate
+
 from config import settings
 
 from api.company import run_article_rag
 
-loader = TextLoader("backend/evaluation/test_article.txt")
+_test_article = Path(__file__).resolve().parent / "test_article.txt"
+loader = TextLoader(str(_test_article))
 docs = loader.load()
 print(f"Loaded {len(docs)} documents")
 
@@ -88,3 +98,43 @@ async def _run_article_eval():
 
 
 asyncio.run(_run_article_eval())
+
+# Run RAGAS metrics on the filled testset (need at least one sample)
+if not testset.samples:
+    print("No testset samples were generated; skipping RAGAS evaluate and cert update.")
+    print("Check that the knowledge graph has nodes and that testset_size / query_distribution produce samples.")
+    sys.exit(1)
+
+eval_dataset = testset.to_evaluation_dataset()
+result = evaluate(
+    eval_dataset,
+    llm=generator_llm,
+    embeddings=generator_embeddings,
+)
+print("RAGAS scores:", result)
+
+if UPDATE_CERT:
+    # Map ragas metric keys to CERTIFICATION.md table row names (first RAGAS table only)
+    _metric_display = {
+        "faithfulness": "Faithfulness",
+        "answer_relevancy": "Response Relevance",
+        "context_precision": "Context Precision",
+        "context_recall": "Context Recall",
+    }
+    cert_path = Path(__file__).resolve().parent.parent.parent / "CERTIFICATION.md"
+    if not cert_path.exists():
+        print("CERTIFICATION.md not found at", cert_path, "- skipping update")
+    else:
+        lines = cert_path.read_text().splitlines()
+        for ragas_key, display_name in _metric_display.items():
+            score = result._repr_dict.get(ragas_key)
+            if score is None:
+                continue
+            score_str = f"{float(score):.2f}"
+            # Update only the two-column "| Metric | Score |" table (not the Baseline table)
+            for i, line in enumerate(lines):
+                if f"| {display_name}" in line and "| —     |" in line:
+                    lines[i] = line.replace("| —     |", f"| {score_str}   |")
+                    break
+        cert_path.write_text("\n".join(lines) + "\n")
+        print("Updated", cert_path)

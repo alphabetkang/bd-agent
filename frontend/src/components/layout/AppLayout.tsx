@@ -15,7 +15,7 @@ type Tab = "overview" | "articles" | "agents" | "sources";
 const TABS: { id: Tab; label: string; Icon: React.ElementType }[] = [
   { id: "overview", label: "Overview", Icon: LayoutDashboard },
   { id: "agents",   label: "Agents",   Icon: Bot },
-  { id: "articles", label: "Articles", Icon: Newspaper },
+  { id: "articles", label: "Search", Icon: Newspaper },
   { id: "sources",  label: "Sources",  Icon: Rss },
 ];
 

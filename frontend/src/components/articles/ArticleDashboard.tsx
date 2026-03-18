@@ -61,7 +61,7 @@ export function ArticleDashboard({ onSelectArticle }: ArticleDashboardProps) {
     <div className={styles.dashboard}>
       <header className={styles.header}>
         <div className={styles.headerLeft}>
-          <span className={styles.headerTitle}>Articles</span>
+          <span className={styles.headerTitle}>Search</span>
           {!loading && articles.length > 0 && (
             <span className={styles.count}>
               {query.trim()
