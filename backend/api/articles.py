@@ -6,14 +6,14 @@ from pathlib import Path
 from fastapi import APIRouter
 from langchain_openai import ChatOpenAI
 
-from config import settings
+from config import RSS_FEEDS, settings
 from ingestion.vector_store import get_vector_store
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/articles", tags=["articles"])
 
 COMPANY_CACHE_FILE = Path(__file__).parent.parent / "article_companies.json"
-PINNED_ARTICLE_FILE = Path(__file__).parent.parent.parent / "evaluation" / "pinned_article.json"
+PINNED_ARTICLE_FILE = Path(__file__).parent.parent / "evaluation" / "pinned_article.json"
 
 
 def _load_cache() -> dict:
@@ -55,11 +55,12 @@ async def _extract_companies(title: str) -> list[str]:
 
 @router.get("")
 async def list_articles():
-    """Return all ingested TechCrunch articles, deduplicated and tagged with companies."""
+    """Return all ingested RSS feed articles, deduplicated and tagged with companies."""
+    rss_source_names = [f["name"] for f in RSS_FEEDS]
     try:
         collection = get_vector_store()._collection
         results = collection.get(
-            where={"source": "TechCrunch"},
+            where={"source": {"$in": rss_source_names}},
             include=["metadatas", "documents"],
         )
     except Exception as exc:

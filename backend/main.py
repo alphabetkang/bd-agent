@@ -9,7 +9,9 @@ from api.articles import router as articles_router
 from api.chat import router as chat_router
 from api.company import router as company_router
 from api.feeds import router as feeds_router
+from api.overview import router as overview_router
 from api.reports import router as reports_router
+from api.research_agents import router as research_agents_router
 from api.sources import router as sources_router
 from config import settings
 from ingestion.rss_ingester import ingest_all_feeds
@@ -34,7 +36,9 @@ app.include_router(articles_router, prefix="/api")
 app.include_router(chat_router, prefix="/api")
 app.include_router(company_router, prefix="/api")
 app.include_router(feeds_router, prefix="/api")
+app.include_router(overview_router, prefix="/api")
 app.include_router(reports_router, prefix="/api")
+app.include_router(research_agents_router, prefix="/api")
 app.include_router(sources_router, prefix="/api")
 
 scheduler = AsyncIOScheduler()

@@ -1,5 +1,87 @@
 .appLayout {
   height: 100vh;
   overflow: hidden;
+  display: flex;
+  background: var(--bg-main);
+}
+
+/* Left nav panel */
+.nav {
+  width: 180px;
+  min-width: 180px;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-surface);
+  border-right: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.navLogo {
+  padding: 16px 16px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--accent);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.navTabs {
+  list-style: none;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.navTab {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  border: none;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: background var(--transition), color var(--transition);
+  text-align: left;
+  position: relative;
+}
+
+.navTab:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.navTabActive {
+  background: rgba(255, 186, 40, 0.08);
+  color: var(--accent);
+}
+
+.navTabActive::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--accent);
+  border-radius: 0 2px 2px 0;
+}
+
+/* Right content area */
+.main {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.blank {
+  height: 100%;
   background: var(--bg-main);
 }

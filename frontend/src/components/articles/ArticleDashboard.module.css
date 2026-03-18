@@ -21,21 +21,12 @@
   gap: 12px;
 }
 
-.logo {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--accent);
-  letter-spacing: 0.3px;
-}
-
-.source {
-  font-size: 12px;
+.headerTitle {
+  font-size: 13px;
   font-weight: 600;
-  color: var(--text-secondary);
-  padding: 2px 10px;
-  background: var(--bg-hover);
-  border: 1px solid var(--border);
-  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-primary);
 }
 
 .count {
@@ -67,6 +58,42 @@
 .refreshBtn:disabled {
   opacity: 0.5;
   cursor: default;
+}
+
+.searchBox {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex: 1;
+  max-width: 340px;
+  background: var(--bg-main);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 5px 10px;
+  transition: border-color var(--transition);
+}
+
+.searchBox:focus-within {
+  border-color: var(--border-light);
+}
+
+.searchIcon {
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.searchInput {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 12px;
+  font-family: var(--font-sans);
+  color: var(--text-primary);
+}
+
+.searchInput::placeholder {
+  color: var(--text-muted);
 }
 
 .body {

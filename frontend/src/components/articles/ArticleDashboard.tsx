@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { RefreshCw } from "lucide-react";
+import { useEffect, useState, useMemo } from "react";
+import { RefreshCw, Search } from "lucide-react";
 import { Article } from "@/types";
 import { fetchArticles } from "@/lib/api";
 import { Spinner } from "@/components/ui/Spinner";
@@ -17,6 +17,7 @@ export function ArticleDashboard({ onSelectArticle }: ArticleDashboardProps) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
+  const [query, setQuery] = useState("");
 
   async function loadArticles() {
     setLoading(true);
@@ -45,16 +46,44 @@ export function ArticleDashboard({ onSelectArticle }: ArticleDashboardProps) {
 
   useEffect(() => { loadArticles(); }, []);
 
+  const filteredArticles = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return articles;
+    return articles.filter(
+      (a) =>
+        a.title.toLowerCase().includes(q) ||
+        a.snippet.toLowerCase().includes(q) ||
+        a.companies.some((c) => c.toLowerCase().includes(q))
+    );
+  }, [articles, query]);
+
   return (
     <div className={styles.dashboard}>
       <header className={styles.header}>
         <div className={styles.headerLeft}>
-          <span className={styles.logo}>BD Agent</span>
-          <span className={styles.source}>TechCrunch</span>
+          <span className={styles.headerTitle}>Articles</span>
           {!loading && articles.length > 0 && (
-            <span className={styles.count}>{articles.length} articles</span>
+            <span className={styles.count}>
+              {query.trim()
+                ? `${filteredArticles.length} / ${articles.length} articles`
+                : `${articles.length} articles`}
+            </span>
           )}
         </div>
+
+        {!loading && !error && articles.length > 0 && (
+          <div className={styles.searchBox}>
+            <Search size={13} className={styles.searchIcon} />
+            <input
+              className={styles.searchInput}
+              type="text"
+              placeholder="Search by title, company, or keyword…"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+          </div>
+        )}
+
         <button
           className={styles.refreshBtn}
           onClick={handleRefresh}
@@ -85,10 +114,15 @@ export function ArticleDashboard({ onSelectArticle }: ArticleDashboardProps) {
         )}
 
         {!loading && !error && articles.length > 0 && (() => {
-          const pinned = articles.filter((a) => a.pinned);
-          const feed = articles.filter((a) => !a.pinned);
+          const pinned = filteredArticles.filter((a) => a.pinned);
+          const feed = filteredArticles.filter((a) => !a.pinned);
           return (
             <>
+              {filteredArticles.length === 0 && (
+                <div className={styles.empty}>
+                  <p>No articles match the selected tags.</p>
+                </div>
+              )}
               {pinned.length > 0 && (
                 <div className={styles.pinnedSection}>
                   <span className={styles.sectionLabel}>Pinned for Evaluation</span>

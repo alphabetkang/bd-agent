@@ -26,4 +26,8 @@ RSS_FEEDS = [
         "name": "TechCrunch",
         "url": "https://techcrunch.com/feed/",
     },
+    {
+        "name": "Crunchbase News",
+        "url": "https://news.crunchbase.com/feed/",
+    },
 ]

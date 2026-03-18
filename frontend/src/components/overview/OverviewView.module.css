@@ -1,0 +1,355 @@
+.view {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--bg-main);
+}
+
+.pageHeader {
+  display: flex;
+  align-items: center;
+  padding: 14px 28px;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.pageTitle {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-primary);
+}
+
+.body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+/* ── Welcome ── */
+
+.welcomeSection {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.welcomeHeading {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.3px;
+  line-height: 1.2;
+}
+
+.welcomeSub {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.prioritiesBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.prioritiesLabel {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--text-muted);
+}
+
+.prioritiesList {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.priorityItem {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.priorityItem::before {
+  content: "—";
+  color: var(--accent);
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+/* ── Section ── */
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.sectionTitle {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  color: var(--text-secondary);
+}
+
+.sectionMeta {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-left: 4px;
+}
+
+/* ── Empty state ── */
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 40px 20px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  color: var(--text-muted);
+  font-size: 13px;
+  text-align: center;
+}
+
+/* ── Agent grid ── */
+
+.agentGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.agentCard {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.agentCardError {
+  border-color: rgba(239, 68, 68, 0.25);
+}
+
+.agentCardHeader {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.agentName {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  line-height: 1.4;
+  min-width: 0;
+}
+
+.agentArticleCount {
+  font-size: 11px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.agentSummary {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.65;
+  padding: 8px 10px;
+  background: rgba(255, 186, 40, 0.04);
+  border-left: 2px solid var(--accent);
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+
+.agentSummaryLoading {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.agentSummaryError {
+  font-size: 12px;
+  color: #ef4444;
+}
+
+/* ── Companies ── */
+
+.companiesLoadingRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.companiesList {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.companyCard {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 12px 16px;
+  background: var(--bg-surface);
+  transition: background var(--transition);
+}
+
+.companyCard:hover {
+  background: var(--bg-hover);
+}
+
+.companyRank {
+  font-size: 12px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  color: var(--accent);
+  min-width: 16px;
+  flex-shrink: 0;
+  padding-top: 1px;
+}
+
+.companyBody {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.companyName {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.companyRationale {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.55;
+}
+
+/* ── Article grid ── */
+
+.articleGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 10px;
+}
+
+.articleCard {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-decoration: none;
+  transition: border-color var(--transition), background var(--transition);
+}
+
+.articleCard:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-light);
+}
+
+.articleCardTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.articleSource {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--accent);
+}
+
+.articleDate {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.articleTitle {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  line-height: 1.45;
+  transition: color var(--transition);
+}
+
+.articleCard:hover .articleTitle {
+  color: var(--accent);
+}
+
+.articleSnippet {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.55;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 2px;
+}
+
+.pill {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--accent);
+  background: var(--accent-muted);
+  border: 1px solid rgba(255, 186, 40, 0.3);
+  border-radius: 3px;
+  padding: 1px 5px;
+}

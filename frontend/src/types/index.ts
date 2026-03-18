@@ -49,6 +49,21 @@ export interface Article {
   pinned?: boolean;
 }
 
+export interface ShortlistedCompany {
+  name: string;
+  rationale: string;
+}
+
+export interface ResearchAgent {
+  id: string;
+  prompt: string;
+  name: string;
+  createdAt: number;
+  articles: Article[];
+  summary: string;
+  status: "loading" | "ready" | "error";
+}
+
 export interface UserSource {
   id: string;
   name: string;
