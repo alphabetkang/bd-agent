@@ -8,18 +8,49 @@ from urllib.parse import urljoin, urlparse
 
 import httpx
 from bs4 import BeautifulSoup
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, HTTPException
 from fastapi.responses import StreamingResponse
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+
+# Cohere Rerank
+from langchain_cohere import CohereRerank
+
 from pydantic import BaseModel
 
 from config import settings
-from ingestion.vector_store import get_retriever, get_vector_store
+from ingestion.vector_store import get_retriever
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/company", tags=["company"])
 
+_cohere_compressor_cache: dict[int, CohereRerank] = {}
+
+
+def _get_cohere_compressor(top_n: int) -> CohereRerank | None:
+    """
+    Lazily instantiate Cohere reranker.
+
+    LangChain's Cohere client expects `CO_API_KEY` unless we pass `cohere_api_key`
+    explicitly, so we do that via `settings.cohere_api_key`.
+    """
+    if top_n <= 0:
+        return None
+
+    if top_n in _cohere_compressor_cache:
+        return _cohere_compressor_cache[top_n]
+
+    try:
+        compressor = CohereRerank(
+            model="rerank-v3.5",
+            top_n=top_n,
+            cohere_api_key=settings.cohere_api_key,
+        )
+        _cohere_compressor_cache[top_n] = compressor
+        return compressor
+    except Exception as e:
+        logger.warning("Cohere reranker init failed; disabling advanced rerank: %s", e)
+        return None
 
 def _sse(event_type: str, data: dict | str) -> str:
     return f"data: {json.dumps({'type': event_type, 'content': data})}\n\n"
@@ -204,7 +235,7 @@ Answer with inline citations:""",
 # Article RAG (non-streaming, for evaluation)
 # ---------------------------------------------------------------------------
 
-async def run_article_rag(article_url: str, query: str, k: int = 8) -> tuple[str, list[str]]:
+async def run_article_rag(article_url: str, query: str, k: int = 8, use_advanced_retriever: bool = False) -> tuple[str, list[str]]:
     """
     Run article RAG for a single query: fetch/chunk article, retrieve top-k passages,
     generate answer. Returns (response_text, list of retrieved context strings) for RAGAS.
@@ -213,15 +244,51 @@ async def run_article_rag(article_url: str, query: str, k: int = 8) -> tuple[str
     if not chunks:
         return "", []
 
-    sources_text = "\n\n".join(f"[{c['id']}] {c['text']}" for c in chunks)
-    context_list = [c["text"] for c in chunks]
-
     llm = ChatOpenAI(
         model=settings.openai_model,
         api_key=settings.openai_api_key,
         streaming=False,
         temperature=0,
     )
+
+    # "Advanced retriever" for article eval: rerank the already-fetched/chunked
+    # article passages using Cohere.
+    if use_advanced_retriever:
+        compressor = _get_cohere_compressor(k)
+        if compressor is not None:
+            try:
+                from langchain_core.documents import Document
+
+                docs_for_rerank = [
+                    Document(
+                        page_content=c["text"],
+                        metadata={
+                            "id": c.get("id"),
+                            "url": c.get("url", ""),
+                            "title": c.get("title", ""),
+                            "source": c.get("source", "article"),
+                        },
+                    )
+                    for c in chunks
+                ]
+                reranked_docs = await compressor.acompress_documents(docs_for_rerank, query)
+                if reranked_docs:
+                    chunks = [
+                        {
+                            "id": str(d.metadata.get("id") or i + 1),
+                            "url": d.metadata.get("url", article_url),
+                            "title": d.metadata.get("title", chunks[0].get("title", "")),
+                            "source": d.metadata.get("source", "article"),
+                            "text": d.page_content,
+                        }
+                        for i, d in enumerate(reranked_docs)
+                    ]
+            except Exception as e:
+                logger.warning("Cohere rerank failed; falling back to cosine top-k: %s", e)
+
+    sources_text = "\n\n".join(f"[{c['id']}] {c['text']}" for c in chunks)
+    context_list = [c["text"] for c in chunks]
+
     chain = ARTICLE_CHAT_PROMPT | llm
     response = await chain.ainvoke(
         {
