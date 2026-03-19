@@ -16,14 +16,12 @@ if str(_backend) not in sys.path:
     sys.path.insert(0, str(_backend))
 
 from langchain_community.document_loaders import TextLoader
-from ragas.llms import LangchainLLMWrapper
+from ragas.llms import llm_factory
 from ragas.embeddings import LangchainEmbeddingsWrapper
-from ragas.testset.graph import KnowledgeGraph
-from ragas.testset.graph import Node, NodeType
-from ragas.testset.transforms import default_transforms, apply_transforms
 from ragas.testset import TestsetGenerator 
 from ragas.testset.synthesizers import SingleHopSpecificQuerySynthesizer
 
+from openai import OpenAI
 from langchain_openai import ChatOpenAI
 from langchain_openai import OpenAIEmbeddings
 
@@ -38,40 +36,44 @@ loader = TextLoader(str(_test_article))
 docs = loader.load()
 print(f"Loaded {len(docs)} documents")
 
-# 
-generator_llm = LangchainLLMWrapper(ChatOpenAI(api_key=settings.openai_api_key, model="gpt-4o-mini"))
+#
+client = OpenAI(api_key=settings.openai_api_key)
+generator_llm = llm_factory(client=client, model="gpt-4o-mini")
 generator_embeddings = LangchainEmbeddingsWrapper(OpenAIEmbeddings(api_key=settings.openai_api_key))
 
-kg = KnowledgeGraph()
-kg
+# SingleHopSpecificQuerySynthesizer needs nodes with an "entities" property. The default
+# document pipeline only adds entities to CHUNK nodes; with one long doc, HeadlineSplitter
+# often yields a single segment so no CHUNKs are created. Pre-chunk by paragraph so we
+# get multiple CHUNK nodes that receive NER and entities.
+def _chunk_doc_by_paragraphs(doc) -> list:
+    from langchain_core.documents import Document
+    blocks = [b.strip() for b in doc.page_content.split("\n\n") if b.strip()]
+    if not blocks:
+        return [doc]
+    return [Document(page_content=block, metadata=doc.metadata) for block in blocks]
 
-for doc in docs: 
-    kg.nodes.append(
-        Node(
-            type=NodeType.DOCUMENT,
-            properties={"page_content": doc.page_content, "metadata": doc.metadata}
-        )
-    )
+chunks = []
+for doc in docs:
+    chunks.extend(_chunk_doc_by_paragraphs(doc))
+print(f"Pre-chunked into {len(chunks)} chunks")
 
-transformer_llm = generator_llm
-embedding_model = generator_embeddings
-
-default_transforms = default_transforms(documents=docs, llm=transformer_llm, embedding_model=embedding_model)
-apply_transforms(kg, default_transforms)
-kg
-
-kg.save("usecase_data_kg.json")
-usecase_data_kg = KnowledgeGraph.load("usecase_data_kg.json")
-usecase_data_kg
-
-generator = TestsetGenerator(llm=generator_llm, embedding_model=embedding_model, knowledge_graph=usecase_data_kg)
+generator = TestsetGenerator(llm=generator_llm, embedding_model=generator_embeddings)
 
 # Single-hop only; multi-hop synthesizers need clusters in the knowledge graph (multiple related nodes).
 query_distribution = [
     (SingleHopSpecificQuerySynthesizer(llm=generator_llm), 1.0),
 ]
 
-testset = generator.generate(testset_size = 20, query_distribution=query_distribution)
+testset = generator.generate_with_chunks(
+    chunks,
+    testset_size=20,
+    query_distribution=query_distribution,
+    transforms_llm=generator_llm,
+    transforms_embedding_model=generator_embeddings,
+)
+
+# Persist the built KG for inspection/reuse (optional)
+generator.knowledge_graph.save(Path(__file__).resolve().parent / "usecase_data_kg.json")
 
 # Article URL for article RAG eval (must match test_article.txt content; e.g. TechCrunch)
 ARTICLE_EVAL_URL = "https://techcrunch.com/2026/03/06/bill-gates-terrapower-gets-approval-to-build-new-nuclear-reactor/"
@@ -113,28 +115,28 @@ result = evaluate(
 )
 print("RAGAS scores:", result)
 
-if UPDATE_CERT:
-    # Map ragas metric keys to CERTIFICATION.md table row names (first RAGAS table only)
-    _metric_display = {
-        "faithfulness": "Faithfulness",
-        "answer_relevancy": "Response Relevance",
-        "context_precision": "Context Precision",
-        "context_recall": "Context Recall",
-    }
-    cert_path = Path(__file__).resolve().parent.parent.parent / "CERTIFICATION.md"
-    if not cert_path.exists():
-        print("CERTIFICATION.md not found at", cert_path, "- skipping update")
-    else:
-        lines = cert_path.read_text().splitlines()
-        for ragas_key, display_name in _metric_display.items():
-            score = result._repr_dict.get(ragas_key)
-            if score is None:
-                continue
-            score_str = f"{float(score):.2f}"
-            # Update only the two-column "| Metric | Score |" table (not the Baseline table)
-            for i, line in enumerate(lines):
-                if f"| {display_name}" in line and "| —     |" in line:
-                    lines[i] = line.replace("| —     |", f"| {score_str}   |")
-                    break
-        cert_path.write_text("\n".join(lines) + "\n")
-        print("Updated", cert_path)
+# if UPDATE_CERT:
+#     # Map ragas metric keys to CERTIFICATION.md table row names (first RAGAS table only)
+#     _metric_display = {
+#         "faithfulness": "Faithfulness",
+#         "answer_relevancy": "Response Relevance",
+#         "context_precision": "Context Precision",
+#         "context_recall": "Context Recall",
+#     }
+#     cert_path = Path(__file__).resolve().parent.parent.parent / "CERTIFICATION.md"
+#     if not cert_path.exists():
+#         print("CERTIFICATION.md not found at", cert_path, "- skipping update")
+#     else:
+#         lines = cert_path.read_text().splitlines()
+#         for ragas_key, display_name in _metric_display.items():
+#             score = result._repr_dict.get(ragas_key)
+#             if score is None:
+#                 continue
+#             score_str = f"{float(score):.2f}"
+#             # Update only the two-column "| Metric | Score |" table (not the Baseline table)
+#             for i, line in enumerate(lines):
+#                 if f"| {display_name}" in line and "| —     |" in line:
+#                     lines[i] = line.replace("| —     |", f"| {score_str}   |")
+#                     break
+#         cert_path.write_text("\n".join(lines) + "\n")
+#         print("Updated", cert_path)
