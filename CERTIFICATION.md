@@ -98,10 +98,10 @@ The evaluation was performed using the test article from TechCrunch. This is bec
 
 | Metric             | Score |
 | ------------------ | ----- |
-| Faithfulness       | 0.89   |
-| Response Relevance | 0.93   |
-| Context Precision  | 0.55   |
-| Context Recall     | 0.88   |
+| Faithfulness       | 0.89  |
+| Response Relevance | 0.93  |
+| Context Precision  | 0.55  |
+| Context Recall     | 0.88  |
 
 
 > Run `python -m evaluation.ragas_eval` from `backend/` to evaluate. Use `--update-cert` to auto-populate this table.
@@ -126,15 +126,13 @@ Two techniques were selected to improve retrieval quality:
 ## Post-Improvement RAGAS Results
 
 
-| Metric             | Baseline | With Advanced Retrieval | Delta |
-| ------------------ | -------- | ----------------------- | ----- |
-| Faithfulness       | —        | —                       | —     |
-| Response Relevance | —        | —                       | —     |
-| Context Precision  | —        | —                       | —     |
-| Context Recall     | —        | —                       | —     |
+| Metric             | Baseline | With Advanced Retrieval | Delta  |
+| ------------------ | -------- | ----------------------- | ------ |
+| Faithfulness       | 0.89     | 0.8106                  | -.0794 |
+| Response Relevance | 0.93     | 0.8410                  | -.089  |
+| Context Precision  | 0.55     | 0.7999                  | +.2499 |
+| Context Recall     | 0.88     | 0.7778                  | -.1022 |
 
-
-> **TODO:** Run RAGAS on improved pipeline and populate results.
 
 ---
 

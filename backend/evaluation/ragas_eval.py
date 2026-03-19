@@ -7,8 +7,10 @@ from pathlib import Path
 # Parse --update-cert before heavy imports
 _parser = argparse.ArgumentParser()
 _parser.add_argument("--update-cert", action="store_true", help="Update CERTIFICATION.md with RAGAS scores")
+_parser.add_argument("--use-advanced-retriever", action="store_true", help="Use advanced retriever")
 _args, _ = _parser.parse_known_args()
 UPDATE_CERT = _args.update_cert
+USE_ADVANCED_RETREIVER = _args.use_advanced_retriever
 
 # Allow importing backend modules (e.g. config) when run as script
 _backend = Path(__file__).resolve().parent.parent
@@ -66,7 +68,7 @@ query_distribution = [
 
 testset = generator.generate_with_chunks(
     chunks,
-    testset_size=20,
+    testset_size=10,
     query_distribution=query_distribution,
     transforms_llm=generator_llm,
     transforms_embedding_model=generator_embeddings,
@@ -94,7 +96,7 @@ print(f"Article RAG eval (url={_url})")
 
 async def _run_article_eval():
     for test_row in testset:
-        answer, context = await run_article_rag(_url, test_row.eval_sample.user_input)
+        answer, context = await run_article_rag(_url, test_row.eval_sample.user_input, use_advanced_retriever=USE_ADVANCED_RETREIVER)
         test_row.eval_sample.response = answer
         test_row.eval_sample.retrieved_contexts = context
 

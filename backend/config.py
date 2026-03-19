@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     openai_model: str = "gpt-4o-mini"
     chroma_persist_dir: str = "./chroma_db"
     rss_refresh_interval_minutes: int = 60
+    cohere_api_key: str
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
