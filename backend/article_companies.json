@@ -277,5 +277,61 @@
   "https://news.crunchbase.com/venture/unicorn-legal-tech-ai-startup-legora-triples-valuation/": [
     "Legora",
     "Accel"
+  ],
+  "https://techcrunch.com/2026/03/18/russians-caught-stealing-personal-data-from-ukrainians-with-new-advanced-iphone-hacking-tools/": [],
+  "https://techcrunch.com/2026/03/18/marquis-says-over-672000-people-had-personal-and-financial-data-stolen-in-ransomware-attack/": [
+    "Marquis"
+  ],
+  "https://techcrunch.com/2026/03/18/dod-says-anthropics-red-lines-make-it-an-unacceptable-risk-to-national-security/": [
+    "Anthropic"
+  ],
+  "https://techcrunch.com/2026/03/18/mave-health-aims-to-improve-attention-and-mood-with-its-brain-stimulating-headset/": [
+    "Mave Health"
+  ],
+  "https://news.crunchbase.com/venture/stripe-alum-raises-online-funeral-planning-startup-meadow/": [
+    "Stripe",
+    "Meadow"
+  ],
+  "https://news.crunchbase.com/public/pwc-bellin-qa-2026-ipo-timing-secondary-boom/": [
+    "PwC"
+  ],
+  "https://techcrunch.com/2026/03/18/this-startup-wants-to-make-enterprise-software-look-more-like-a-prompt/": [
+    "startup"
+  ],
+  "https://techcrunch.com/2026/03/18/facebook-launches-a-new-monetization-program-to-attract-popular-creators-from-tiktok-youtube/": [
+    "Facebook",
+    "TikTok",
+    "YouTube"
+  ],
+  "https://techcrunch.com/2026/03/18/sequen-snags-16m-to-bring-tiktok-style-personalization-tech-to-any-consumer-company/": [
+    "Sequen",
+    "TikTok"
+  ],
+  "https://techcrunch.com/2026/03/18/microsoft-hires-the-team-of-sequioa-backed-ai-collaboration-platform-cove/": [
+    "Microsoft",
+    "Sequoia",
+    "Cove"
+  ],
+  "https://techcrunch.com/2026/03/18/the-gemini-powered-features-in-google-workspace-that-are-worth-using/": [
+    "Google"
+  ],
+  "https://techcrunch.com/2026/03/18/apps-to-distract-you-from-the-endless-cycle-of-doomscrolling/": [],
+  "https://techcrunch.com/video/the-leaderboard-you-cant-game-funded-by-the-companies-it-ranks/": [
+    "leaderboard",
+    "companies"
+  ],
+  "https://techcrunch.com/2026/03/18/pardoned-nikola-founder-trevor-milton-is-trying-to-raise-1b-for-ai-powered-planes/": [
+    "Nikola"
+  ],
+  "https://techcrunch.com/2026/03/18/patreon-ceo-calls-ai-companies-fair-use-argument-bogus-says-creators-should-be-paid/": [
+    "Patreon"
+  ],
+  "https://techcrunch.com/2026/03/18/rebel-audio-is-a-new-ai-podcasting-tool-aimed-at-first-time-creators/": [
+    "Rebel Audio"
+  ],
+  "https://techcrunch.com/2026/03/18/fbi-is-buying-location-data-to-track-us-citizens-kash-patel-wyden/": [],
+  "https://news.crunchbase.com/startups/tech-layoffs/": [],
+  "https://techcrunch.com/2026/03/18/nvidia-networking-division-building-a-multibillion-dollar-behemoth-to-rival-its-chips-business/": [
+    "Nvidia"
   ]
 }

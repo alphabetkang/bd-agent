@@ -204,17 +204,17 @@ Answer with inline citations:""",
 # Article RAG (non-streaming, for evaluation)
 # ---------------------------------------------------------------------------
 
-async def run_article_rag(article_url: str, query: str, k: int = 8) -> tuple[str, str]:
+async def run_article_rag(article_url: str, query: str, k: int = 8) -> tuple[str, list[str]]:
     """
     Run article RAG for a single query: fetch/chunk article, retrieve top-k passages,
-    generate answer. Returns (response_text, retrieved_context_str) for use in RAGAS etc.
+    generate answer. Returns (response_text, list of retrieved context strings) for RAGAS.
     """
     chunks = await _rag_article_chunks(article_url, query, k=k)
     if not chunks:
-        return "", ""
+        return "", []
 
     sources_text = "\n\n".join(f"[{c['id']}] {c['text']}" for c in chunks)
-    context_str = "\n\n".join(c["text"] for c in chunks)
+    context_list = [c["text"] for c in chunks]
 
     llm = ChatOpenAI(
         model=settings.openai_model,
@@ -231,7 +231,7 @@ async def run_article_rag(article_url: str, query: str, k: int = 8) -> tuple[str
         }
     )
     answer = response.content if hasattr(response, "content") else str(response)
-    return answer, context_str
+    return answer, context_list
 
 
 # ---------------------------------------------------------------------------

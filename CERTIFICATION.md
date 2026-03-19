@@ -93,19 +93,15 @@ Deployed locally at `http://localhost:3000`. See `README.md` for setup instructi
 
 ## RAGAS Pipeline Evaluation
 
-
-
 The evaluation was performed using the test article from TechCrunch. This is because this platform currently dynamically loads news articles that are live on the TechCrunch website. For reproducibility purposes, a test news article is provided at 
-
-
 
 
 | Metric             | Score |
 | ------------------ | ----- |
-| Faithfulness       | —     |
-| Response Relevance | —     |
-| Context Precision  | —     |
-| Context Recall     | —     |
+| Faithfulness       | 0.89   |
+| Response Relevance | 0.93   |
+| Context Precision  | 0.55   |
+| Context Recall     | 0.88   |
 
 
 > Run `python -m evaluation.ragas_eval` from `backend/` to evaluate. Use `--update-cert` to auto-populate this table.

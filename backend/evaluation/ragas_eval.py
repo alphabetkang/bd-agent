@@ -115,28 +115,28 @@ result = evaluate(
 )
 print("RAGAS scores:", result)
 
-# if UPDATE_CERT:
-#     # Map ragas metric keys to CERTIFICATION.md table row names (first RAGAS table only)
-#     _metric_display = {
-#         "faithfulness": "Faithfulness",
-#         "answer_relevancy": "Response Relevance",
-#         "context_precision": "Context Precision",
-#         "context_recall": "Context Recall",
-#     }
-#     cert_path = Path(__file__).resolve().parent.parent.parent / "CERTIFICATION.md"
-#     if not cert_path.exists():
-#         print("CERTIFICATION.md not found at", cert_path, "- skipping update")
-#     else:
-#         lines = cert_path.read_text().splitlines()
-#         for ragas_key, display_name in _metric_display.items():
-#             score = result._repr_dict.get(ragas_key)
-#             if score is None:
-#                 continue
-#             score_str = f"{float(score):.2f}"
-#             # Update only the two-column "| Metric | Score |" table (not the Baseline table)
-#             for i, line in enumerate(lines):
-#                 if f"| {display_name}" in line and "| —     |" in line:
-#                     lines[i] = line.replace("| —     |", f"| {score_str}   |")
-#                     break
-#         cert_path.write_text("\n".join(lines) + "\n")
-#         print("Updated", cert_path)
+if UPDATE_CERT:
+    # Map ragas metric keys to CERTIFICATION.md table row names (first RAGAS table only)
+    _metric_display = {
+        "faithfulness": "Faithfulness",
+        "answer_relevancy": "Response Relevance",
+        "context_precision": "Context Precision",
+        "context_recall": "Context Recall",
+    }
+    cert_path = Path(__file__).resolve().parent.parent.parent / "CERTIFICATION.md"
+    if not cert_path.exists():
+        print("CERTIFICATION.md not found at", cert_path, "- skipping update")
+    else:
+        lines = cert_path.read_text().splitlines()
+        for ragas_key, display_name in _metric_display.items():
+            score = result._repr_dict.get(ragas_key)
+            if score is None:
+                continue
+            score_str = f"{float(score):.2f}"
+            # Update only the two-column "| Metric | Score |" table (not the Baseline table)
+            for i, line in enumerate(lines):
+                if f"| {display_name}" in line and "| —     |" in line:
+                    lines[i] = line.replace("| —     |", f"| {score_str}   |")
+                    break
+        cert_path.write_text("\n".join(lines) + "\n")
+        print("Updated", cert_path)
